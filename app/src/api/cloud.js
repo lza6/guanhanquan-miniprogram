@@ -16,6 +16,23 @@ export function initCloud() {
 /**
  * 调用云函数。返回完整响应体 { success, data, message }，与页面层既有写法保持一致。
  */
+
+/** 统一失败处理：401 引导登录，其余弹提示 */
+function handleFailure(body) {
+  if (body && body.code === 401) {
+    uni.showModal({
+      title: '需要登录',
+      content: '登录后才能联系老板、报名和收藏',
+      confirmText: '去登录',
+      success(res) {
+        if (res.confirm) uni.navigateTo({ url: '/pages/login/login' })
+      }
+    })
+    return
+  }
+  uni.showToast({ title: (body && body.message) || '请求失败', icon: 'none' })
+}
+
 function devRequest(path, method, data) {
   // 本地联调固定身份，便于命中种子数据
   const openid = uni.getStorageSync('ghq_dev_openid') || 'dev-openid'
@@ -32,7 +49,7 @@ function devRequest(path, method, data) {
         if (body && (body.success || body.code === 0)) {
           resolve(body)
         } else {
-          uni.showToast({ title: (body && body.message) || '请求失败', icon: 'none' })
+          handleFailure(body)
           reject(body)
         }
       },
@@ -57,7 +74,7 @@ export function callApi(path, method = 'GET', data = {}) {
         if (body && (body.success || body.code === 0 || body.code === 200)) {
           resolve(body)
         } else {
-          uni.showToast({ title: (body && body.message) || '请求失败', icon: 'none' })
+          handleFailure(body)
           reject(body)
         }
       },

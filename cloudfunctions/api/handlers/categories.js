@@ -2,13 +2,13 @@ const L = require('../lib')
 
 // 冷启动默认工种，后台可在 categories 集合覆盖
 const DEFAULT_CATEGORIES = [
-  { key: 'guandao', name: '管工', description: '配管、组对', icon: '/static/img/category/guandao.png', sort: 1 },
-  { key: 'hanjie', name: '焊工', description: '手工焊、氩电焊', icon: '/static/img/category/hanjie.png', sort: 2 },
-  { key: 'pugong', name: '普工', description: '辅助施工', icon: '/static/img/category/pugong.png', sort: 3 },
-  { key: 'maogong', name: '铆工', description: '钢结构组立', icon: '/static/img/category/maogong.png', sort: 4 },
-  { key: 'qizhong', name: '起重工', description: '吊装、指挥', icon: '/static/img/category/qizhong.png', sort: 5 },
-  { key: 'diangong', name: '电工', description: '现场电气', icon: '/static/img/category/diangong.png', sort: 6 },
-  { key: 'jishuyuan', name: '技术员', description: '施工技术管理', icon: '/static/img/category/jishuyuan.png', sort: 7 }
+  { key: 'guandao', name: '管工', description: '配管、组对', icon: '', sort: 1 },
+  { key: 'hanjie', name: '焊工', description: '手工焊、氩电焊', icon: '', sort: 2 },
+  { key: 'pugong', name: '普工', description: '辅助施工', icon: '', sort: 3 },
+  { key: 'maogong', name: '铆工', description: '钢结构组立', icon: '', sort: 4 },
+  { key: 'qizhong', name: '起重工', description: '吊装、指挥', icon: '', sort: 5 },
+  { key: 'diangong', name: '电工', description: '现场电气', icon: '', sort: 6 },
+  { key: 'jishuyuan', name: '技术员', description: '施工技术管理', icon: '', sort: 7 }
 ]
 
 async function loadCategories() {

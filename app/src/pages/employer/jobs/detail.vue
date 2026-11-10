@@ -86,12 +86,13 @@
 </template>
 
 <script>
+import api from '@/api/index.js'
 export default {
   data() {
     return {
       type: '', // 页面类型: recruiting, reviewing, selecting, interviewing, completed
       currentStatus: 'pending',
-      jobList: []
+      jobList: [],
     }
   },
   computed: {
@@ -114,38 +115,31 @@ export default {
   },
   methods: {
     // 加载岗位列表
-    loadJobList() {
-      // 模拟数据
-      setTimeout(() => {
-        this.jobList = [
-          {
-            id: '1',
-            title: '车工 (女)',
-            salary: '6500元/月',
-            timeRange: '2025/05/09 00:00 - 2025/06/09 00:00',
-            requiredCount: 2,
-            gender: 'female',
-            jobType: '普工',
-            address: '集根路356号',
-            content: '1、女性，有相关缝纫经验均可，根据经验岗位平车、高车、电脑车工、台包等岗位工作。厦门维发服饰有限公司(智能制造)，联系电话: 18030027221',
-            status: 'pending'
-          },
-          {
-            id: '2',
-            title: '家电维修工',
-            salary: '200元/天',
-            timeRange: '2025/05/15 08:00 - 2025/05/15 17:00',
-            requiredCount: 1,
-            gender: 'male',
-            jobType: '维修工',
-            address: '思明区嘉莲街道45号',
-            content: '负责空调、冰箱等大型家电的维修和保养服务，有2年以上相关工作经验',
-            status: 'accepted'
-          }
-        ]
-      }, 500)
+    async loadJobList() {
+      const statusMap = { recruiting: 1, reviewing: 0, completed: 2 }
+      try {
+        const res = await api.getEmployerJobs({
+          page: 1,
+          pageSize: 50,
+          status: statusMap[this.type] !== undefined ? statusMap[this.type] : ''
+        })
+        this.jobList = (res.data.records || []).map((j) => ({
+          id: j.id,
+          title: j.title,
+          jobType: j.jobType,
+          salary: j.salary + ' 元/天',
+          timeRange: j.duration || '',
+          address: j.workArea || '',
+          content: '',
+          gender: '',
+          requiredCount: '',
+          status: j.status
+        }))
+      } catch (e) {
+        this.jobList = []
+      }
     },
-    
+
     // 切换状态标签
     changeStatus(status) {
       this.currentStatus = status

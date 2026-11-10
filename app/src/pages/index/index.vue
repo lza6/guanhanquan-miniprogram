@@ -43,7 +43,8 @@
       <view class="category-grid">
         <view class="category-item" v-for="(item, index) in categories" :key="index" @tap="goToCategory(item)">
           <view class="icon-wrapper">
-            <image :src="item.icon" mode="aspectFit" class="category-icon"></image>
+            <image v-if="item.icon" :src="item.icon" mode="aspectFit" class="category-icon"></image>
+            <text v-else class="category-initial">{{ item.name.charAt(0) }}</text>
           </view>
           <text class="category-name">{{item.name}}</text>
           <text class="category-desc">{{item.description}}</text>
@@ -74,7 +75,7 @@
       <!-- 热门推荐岗位 -->
       <view class="job-list-container" v-if="currentTab === 'hot'">
         <view class="job-list">
-          <job-card-compact v-for="(job, index) in recommendJobs" :key="index" :job="job"></job-card-compact>
+          <job-card v-for="(job, index) in recommendJobs" :key="index" :job="job"></job-card>
           <view class="more-jobs" @tap="gotoMoreJobs">查看更多岗位 <text class="cuIcon-right"></text></view>
         </view>
       </view>
@@ -82,7 +83,7 @@
       <!-- 离我最近岗位 -->
       <view class="job-list-container" v-if="currentTab === 'nearest'">
         <view class="job-list">
-          <job-card-compact v-for="(job, index) in nearestJobs" :key="index" :job="job"></job-card-compact>
+          <job-card v-for="(job, index) in nearestJobs" :key="index" :job="job"></job-card>
           <view class="more-jobs" @tap="gotoMoreJobs">查看更多岗位 <text class="cuIcon-right"></text></view>
         </view>
       </view>
@@ -90,7 +91,7 @@
       <!-- 最新岗位 -->
       <view class="job-list-container" v-if="currentTab === 'latest'">
         <view class="job-list">
-          <job-card-compact v-for="(job, index) in latestJobs" :key="index" :job="job"></job-card-compact>
+          <job-card v-for="(job, index) in latestJobs" :key="index" :job="job"></job-card>
           <view class="more-jobs" @tap="gotoMoreJobs">查看更多岗位 <text class="cuIcon-right"></text></view>
         </view>
       </view>
@@ -102,13 +103,13 @@
 </template>
 
 <script>
-import JobCardCompact from '@/components/job-card-compact.vue'
+import JobCard from '@/components/job-card.vue'
 import IdentitySwitch from '@/components/identity-switch.vue'
 import API from '@/api/index.js'
 
 export default {
   components: {
-    JobCardCompact,
+    JobCard,
     IdentitySwitch
   },
   data() {
@@ -575,7 +576,8 @@ export default {
     box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.05);
     transition: all 0.3s ease;
     
-    .category-icon {
+    .category-initial { font-size: 40rpx; color: #1976d2; font-weight: 700; }
+.category-icon {
       width: 60rpx;
       height: 60rpx;
     }

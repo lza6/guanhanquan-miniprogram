@@ -124,8 +124,8 @@ module.exports = function seed(coll, L) {
   )
 
   coll('banners').push(
-    { _id: 'bn1', imageUrl: 'https://img.yzcdn.cn/vant/cat.jpeg', link: '', title: '春季招工专场', sort: 1, enabled: true, createdAt: now - DAY * 5 },
-    { _id: 'bn2', imageUrl: 'https://img.yzcdn.cn/vant/apple-1.jpg', link: '', title: '焊工持证上岗', sort: 2, enabled: true, createdAt: now - DAY * 3 }
+    { _id: 'bn1', imageUrl: '/static/img/default/shili.png', link: '', title: '春季招工专场', sort: 1, enabled: true, createdAt: now - DAY * 5 },
+    { _id: 'bn2', imageUrl: '/static/img/default/shili.png', link: '', title: '焊工持证上岗', sort: 2, enabled: true, createdAt: now - DAY * 3 }
   )
 
   coll('reviews').push(
@@ -134,7 +134,7 @@ module.exports = function seed(coll, L) {
   )
 
   coll('trainings').push(
-    { _id: 't1', title: '氩弧焊入门到精通', cover: 'https://img.yzcdn.cn/vant/cat.jpeg', price: 0,
+    { _id: 't1', title: '氩弧焊入门到精通', cover: '/static/img/default/shili.png', price: 0,
       type: 'skill', teacher: '王工', intro: '零基础学氩弧焊，含实操', enabled: true },
     { _id: 't2', title: '焊工安全操作规程', cover: '', price: 0, type: 'safety',
       teacher: '安监处', intro: '上岗前必修', enabled: true }

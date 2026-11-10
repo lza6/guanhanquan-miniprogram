@@ -78,6 +78,7 @@
 </template>
 
 <script>
+import api from '@/api/index.js'
 export default {
     data() {
         return {
@@ -91,50 +92,7 @@ export default {
                 description: '提供外卖配送、快递取件等灵活就业机会，时间自由，多劳多得。适合身体健康，有驾驶证和交通工具的人员。',
                 tags: ['日结工资', '弹性时间', '高收入', '交通工具']
             },
-            workers: [
-                {
-                    id: '1',
-                    name: '张师傅',
-                    avatar: '/static/img/default/avatar1.jpg',
-                    verified: true,
-                    skills: ['熟悉厦门路线', '3年经验'],
-                    rate: '5000',
-                    rateUnit: '月',
-                    distance: '1.2',
-                    rating: '4.8',
-                    reviewCount: '56',
-                    workTimes: '08:00-18:00',
-                    status: 'online'
-                },
-                {
-                    id: '2',
-                    name: '李师傅',
-                    avatar: '/static/img/default/avatar2.jpg',
-                    verified: true,
-                    skills: ['熟悉厦门路线', '5年经验'],
-                    rate: '5000',
-                    rateUnit: '月',
-                    distance: '3.5',
-                    rating: '4.9',
-                    reviewCount: '78',
-                    workTimes: '08:00-18:00',
-                    status: 'online'
-                },
-                {
-                    id: '3',
-                    name: '王师傅',
-                    avatar: '/static/img/default/avatar3.jpg',
-                    verified: false,
-                    skills: ['熟悉厦门路线', '1年经验'],
-                    rate: '4800',
-                    rateUnit: '月',
-                    distance: '2.8',
-                    rating: '4.5',
-                    reviewCount: '23',
-                    workTimes: '09:00-19:00',
-                    status: 'offline'
-                }
-            ]
+            workers: [],
         }
     },
     computed: {
@@ -174,16 +132,29 @@ export default {
                 }
             })
         },
-        loadCategoryDetails() {
-            // 根据categoryId加载分类详情和工人列表
-            // 此处为模拟数据，实际应从服务器获取
-            uni.showLoading({
-                title: '加载中...'
-            })
-
-            setTimeout(() => {
+        async loadCategoryDetails() {
+            uni.showLoading({ title: '加载中...' })
+            try {
+                const res = await api.getWorkersByCategory(this.categoryId, { page: 1, pageSize: 20 })
+                const list = (res.data && res.data.records) || []
+                this.workers = list.map((w) => ({
+                    id: w.id,
+                    name: w.name,
+                    avatar: w.avatar || '/static/img/default-avatar.png',
+                    phone: '',
+                    skills: (w.jobTypes || []).join(' / '),
+                    rate: w.expectSalary || '面议',
+                    rateUnit: '',
+                    rating: 0,
+                    verified: !!w.certificateInfo,
+                    workTimes: w.workExperience || '',
+                    distance: ''
+                }))
+            } catch (e) {
+                this.workers = []
+            } finally {
                 uni.hideLoading()
-            }, 500)
+            }
         },
         setFilter(filter) {
             this.currentFilter = filter

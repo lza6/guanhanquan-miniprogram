@@ -155,7 +155,14 @@ export default {
         this.favorited = false
       }
     },
-    async unlock() {
+    unlock() {
+      uni.showModal({
+        title: '解锁联系方式',
+        content: `将消耗 ${this.job.unlockCost} 积分查看老板电话，确认继续？`,
+        success: (r) => { if (r.confirm) this.doUnlock() }
+      })
+    },
+    async doUnlock() {
       if (this.unlocking) return
       this.unlocking = true
       try {

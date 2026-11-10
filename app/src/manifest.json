@@ -50,6 +50,12 @@
     "quickapp" : {},
     /* 快应用特有相关 */
     "mp-weixin" : {
+        "requiredPrivateInfos" : ["getLocation"],
+        "permission" : {
+            "scope.userLocation" : {
+                "desc" : "用于展示附近的招工信息"
+            }
+        },
         /* 小程序特有相关 */
         "appid" : "",
         "setting" : {
