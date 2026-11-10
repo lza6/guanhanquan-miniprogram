@@ -1,0 +1,9 @@
+{
+  "name": "ghq-api",
+  "version": "1.0.0",
+  "description": "管焊圈小程序云函数：单入口 + 路由，兼容小程序 callFunction 与 HTTP 访问（管理后台）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
