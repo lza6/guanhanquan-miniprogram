@@ -10,8 +10,8 @@
     <!-- 搜索栏 -->
     <view class="search-box">
       <view class="search-bar" @tap="goToSearch">
-        <view class="location-btn">
-          <text>区域</text>
+        <view class="location-btn" @tap.stop="chooseCity">
+          <text>{{ city || '区域' }}</text>
           <text class="cuIcon-unfold"></text>
         </view>
         <view class="search-form">
@@ -21,7 +21,12 @@
         <view class="search-btn">搜索</view>
       </view>
     </view>
-    
+
+    <view class="quick-row">
+      <view class="quick-chip" @tap="goBlacklist">查黑老板</view>
+      <view class="quick-chip" @tap="goWallet">积分 {{ points }}</view>
+    </view>
+
     <!-- 轮播图 (招募广告) -->
     <view class="banner-wrapper" :style="{height: bannerHeight}">
       <swiper class="screen-swiper" 
@@ -115,6 +120,8 @@ export default {
       bannerHeight: 'auto',
       showPromoBanner: false,
       categories: [],
+      city: '',
+      points: 0,
       recommendJobs: [],
       nearestJobs: [],
       latestJobs: [],
@@ -129,6 +136,7 @@ export default {
     this.getUserLocation()
     this.preloadBannerImage()
     this.fetchHomeData()
+    this.loadPoints()
   },
   // 添加下拉刷新
   onPullDownRefresh() {
@@ -199,18 +207,19 @@ export default {
         let response
         switch (tab) {
           case 'hot':
-            response = await API.getRecommendedJobs({ page, pageSize: this.pageSize })
+            response = await API.getRecommendedJobs({ page, pageSize: this.pageSize, city: this.city || undefined })
             break
           case 'nearest':
             response = await API.getNearbyJobs({ 
               page, 
               pageSize: this.pageSize,
+              city: this.city || undefined,
               latitude: this.location && this.location.latitude,
               longitude: this.location && this.location.longitude
             })
             break
           case 'latest':
-            response = await API.getRecommendedJobs({ page, pageSize: this.pageSize })
+            response = await API.getRecommendedJobs({ page, pageSize: this.pageSize, city: this.city || undefined })
             break
         }
         
@@ -313,6 +322,29 @@ export default {
       }
     },
 
+
+    chooseCity() {
+      const cities = ['全部城市', '沈阳', '乌鲁木齐', '合肥', '大连', '长春', '天津', '青岛']
+      uni.showActionSheet({
+        itemList: cities,
+        success: (r) => {
+          this.city = r.tapIndex === 0 ? '' : cities[r.tapIndex]
+          this.recommendJobs = []
+          this.nearestJobs = []
+          this.latestJobs = []
+          this.fetchHomeData()
+        }
+      })
+    },
+    goBlacklist() {
+      uni.navigateTo({ url: '/pages/blacklist/query' })
+    },
+    async loadPoints() {
+      try { const r = await API.getWallet(); this.points = r.data.points } catch (e) {}
+    },
+    async goWallet() {
+      uni.navigateTo({ url: '/pages/wallet/index' })
+    },
 
     // 切换标签
     async switchTab(tab) {
@@ -483,6 +515,8 @@ export default {
     }
   }
   
+  .quick-row { display: flex; padding: 0 30rpx 20rpx; }
+  .quick-chip { background: #fff; color: #1976d2; font-size: 24rpx; padding: 10rpx 24rpx; border-radius: 30rpx; margin-right: 16rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,.05); }
   .search-btn {
     width: 90rpx;
     text-align: center;

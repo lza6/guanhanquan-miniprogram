@@ -73,6 +73,34 @@
             <view class="text">我的收藏</view>
             <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
           </view>
+          <view class="menu-item" @click="checkLogin('/pages/resume/my')">
+            <view class="icon">
+              <uni-icons type="person" size="22" color="#1976D2"></uni-icons>
+            </view>
+            <view class="text">我的求职</view>
+            <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
+          </view>
+          <view class="menu-item" @click="checkLogin('/pages/wallet/index')">
+            <view class="icon">
+              <uni-icons type="wallet" size="22" color="#FF9800"></uni-icons>
+            </view>
+            <view class="text">积分与余额</view>
+            <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
+          </view>
+          <view class="menu-item" @click="checkLogin('/pages/blacklist/query')">
+            <view class="icon">
+              <uni-icons type="search" size="22" color="#E54D42"></uni-icons>
+            </view>
+            <view class="text">黑老板查询</view>
+            <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
+          </view>
+          <view class="menu-item" @click="checkLogin('/pages/service/index')">
+            <view class="icon">
+              <uni-icons type="headphones" size="22" color="#4CAF50"></uni-icons>
+            </view>
+            <view class="text">客服中心</view>
+            <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
+          </view>
           <view class="menu-item" @click="checkLogin('/pages/mine/certification')">
             <view class="icon">
               <uni-icons type="medal" size="22" color="#4CAF50"></uni-icons>

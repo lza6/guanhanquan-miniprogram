@@ -1,0 +1,13 @@
+const automator = require('miniprogram-automator')
+;(async () => {
+  const mp = await automator.connect({ wsEndpoint: 'ws://127.0.0.1:9420' })
+  await mp.reLaunch('/pages/jobDetail/jobDetail?id=j1')
+  await new Promise(r => setTimeout(r, 4500))
+  const page = await mp.currentPage()
+  const root = await page.$('.job-detail')
+  const empty = await page.$('.empty')
+  const loading = await page.$('.loading')
+  const nav = await page.$('cu-custom')
+  console.log('route:', page.path, '| root:', !!root, '| empty:', !!empty, '| loading:', !!loading, '| nav:', !!nav)
+  await mp.disconnect(); process.exit(0)
+})().catch(e => { console.error('ERR', e.message); process.exit(1) })

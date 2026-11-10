@@ -228,6 +228,27 @@
         "navigationStyle": "custom",
         "navigationBarTitleText": "报名管理"
       }
+    },
+    {
+      "path": "pages/resume/my",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "我的求职"
+      }
+    },
+    {
+      "path": "pages/wallet/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "积分与余额"
+      }
+    },
+    {
+      "path": "pages/service/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "客服中心"
+      }
     }
   ],
   "subPackages": [

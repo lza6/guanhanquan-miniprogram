@@ -1,0 +1,13 @@
+const path = require('path')
+const automator = require('miniprogram-automator')
+;(async () => {
+  const mp = await automator.connect({ wsEndpoint: 'ws://127.0.0.1:9420' })
+  await mp.reLaunch('/pages/jobSearch/jobSearch')
+  await new Promise(r => setTimeout(r, 5000))
+  await mp.screenshot({ path: path.join(__dirname, 'shots', 'search-only.png') })
+  const page = await mp.currentPage()
+  const item = await page.$('.task-item')
+  const empty = await page.$('.empty-state')
+  console.log('列表项:', !!item, '空态:', !!empty, '路由:', page.path)
+  await mp.disconnect(); process.exit(0)
+})().catch(e => { console.error('ERR', e.message); process.exit(1) })

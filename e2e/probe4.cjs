@@ -1,0 +1,10 @@
+const automator = require('miniprogram-automator')
+;(async () => {
+  const mp = await automator.connect({ wsEndpoint: 'ws://127.0.0.1:9420' })
+  await mp.reLaunch('/pages/jobSearch/jobSearch')
+  await new Promise(r => setTimeout(r, 4000))
+  const page = await mp.currentPage()
+  const item = await page.$('.task-item')
+  console.log('列表项:', !!item)
+  await mp.disconnect(); process.exit(0)
+})().catch(e => { console.error('ERR', e.message); process.exit(1) })

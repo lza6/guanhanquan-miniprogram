@@ -1,0 +1,12 @@
+const path = require('path')
+const automator = require('miniprogram-automator')
+;(async () => {
+  const mp = await automator.connect({ wsEndpoint: 'ws://127.0.0.1:9420' })
+  await mp.reLaunch('/pages/jobDetail/jobDetail?id=j1')
+  await new Promise(r => setTimeout(r, 4000))
+  await mp.screenshot({ path: path.join(__dirname, 'shots', 'detail-only.png') })
+  const page = await mp.currentPage()
+  const t = await page.$('.job-title')
+  console.log('标题元素:', t ? await t.text() : '无')
+  await mp.disconnect(); process.exit(0)
+})().catch(e => { console.error('ERR', e.message); process.exit(1) })

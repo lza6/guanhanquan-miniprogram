@@ -72,8 +72,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   await sleep(4000)
   await shot('04-search')
   const sp = await mp.currentPage()
-  let anyItem = await sp.$('.task-item')
-  if (!anyItem) { await sleep(2500); anyItem = await sp.$('.task-item') }
+  let anyItem = await sp.$('.item')
+  if (!anyItem) { await sleep(2500); anyItem = await sp.$('.item') }
   check('搜索页有列表项', !!anyItem)
 
   // 5. 发布页
@@ -109,6 +109,30 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   const ip = await mp.currentPage()
   const prod = await ip.$('.name')
   check('保险产品渲染', !!prod, prod ? await prod.text() : '空')
+
+  // 10. 积分与余额
+  await mp.navigateTo('/pages/wallet/index')
+  await sleep(2200)
+  await shot('10-wallet')
+  const wp = await mp.currentPage()
+  const pnum = await wp.$('.num')
+  check('积分页渲染', !!pnum, pnum ? await pnum.text() : '空')
+
+  // 11. 客服中心
+  await mp.navigateTo('/pages/service/index')
+  await sleep(1600)
+  await shot('11-service')
+  const svp = await mp.currentPage()
+  const q = await svp.$('.q')
+  check('客服 FAQ 渲染', !!q, q ? (await q.text()).slice(0, 16) : '空')
+
+  // 12. 我的求职
+  await mp.navigateTo('/pages/resume/my')
+  await sleep(2200)
+  await shot('12-resume')
+  const rp = await mp.currentPage()
+  const sec = await rp.$('.section-title')
+  check('我的求职页渲染', !!sec, sec ? await sec.text() : '空')
 
   console.log('\n结果: ' + pass + ' 通过, ' + fail + ' 失败')
   if (fails.length) console.log('失败项: ' + fails.join(' / '))

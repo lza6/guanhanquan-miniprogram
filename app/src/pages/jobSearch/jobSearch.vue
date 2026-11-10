@@ -1,708 +1,146 @@
 <template>
-  <view class="task-container">
-    <!-- 自定义导航栏 -->
-    <cu-custom bgColor="bg-gradual-green">
-      <block slot="content">任务</block>
-    </cu-custom>
-    
-    <!-- 搜索栏 -->
-    <view class="search-bar">
-      <view class="search-input">
-        <text class="cuIcon-search text-gray"></text>
-        <input type="text" placeholder="搜索工作" confirm-type="search" v-model="searchText" @confirm="search"></input>
-      </view>
-      <view class="filter-btn" @tap="showFilterPopup">
-        <text class="cuIcon-filter"></text>
+  <view class="page">
+    <cu-custom bgColor="bg-gradual-green" :isBack="false"><block slot="content">找活</block></cu-custom>
+
+    <view class="search-box">
+      <view class="search-bar">
+        <input v-model="keyword" placeholder="工种、地区、老板" confirm-type="search" @confirm="reload" />
+        <text class="btn" @tap="reload">搜索</text>
       </view>
     </view>
-    
-    <!-- 排序选项 -->
-    <view class="sort-bar">
-      <view class="sort-item" 
-        v-for="(item, index) in sortOptions" 
-        :key="index"
-        :class="{ active: currentSort === item.value }"
-        @tap="changeSort(item.value)">
-        {{ item.label }}
-        <text class="sort-icon" v-if="item.value === currentSort">
-          {{ sortOrder === 'asc' ? '↑' : '↓' }}
-        </text>
+
+    <view class="filter-bar">
+      <view :class="['chip', { active: sort === '' }]" @tap="setSort('')">最新</view>
+      <view :class="['chip', { active: sort === 'salary' }]" @tap="setSort('salary')">薪资高</view>
+      <view :class="['chip', { active: within === 24 }]" @tap="setWithin(24)">24小时</view>
+      <view :class="['chip', { active: within === 168 }]" @tap="setWithin(168)">一周内</view>
+    </view>
+
+    <view class="list">
+      <view class="item" v-for="job in list" :key="job.id" @tap="goDetail(job)">
+        <view class="head">
+          <view class="title-row">
+            <text class="title">{{ job.title }}</text>
+            <text v-if="job.isTop" class="badge top">置顶</text>
+            <text v-if="job.isUrgent" class="badge urgent">急招</text>
+          </view>
+          <text class="salary">{{ job.salary }}<text class="unit">元/天</text></text>
+        </view>
+        <view class="meta">
+          <text>{{ job.workArea }}</text>
+          <text v-if="job.duration"> · {{ job.duration }}</text>
+        </view>
+        <view class="foot">
+          <text class="company">{{ job.employerName || '雇主' }}</text>
+          <text class="time">{{ ago(job.createdAt) }}</text>
+        </view>
       </view>
     </view>
-    
-    <!-- 筛选条件 -->
-    <view class="filter-section" v-if="showFilters">
-      <view class="filter-group">
-        <view class="filter-title">薪资范围</view>
-        <view class="salary-range">
-          <input type="number" v-model="filterParams.minSalary" placeholder="最低薪资" />
-          <text class="range-separator">-</text>
-          <input type="number" v-model="filterParams.maxSalary" placeholder="最高薪资" />
-        </view>
-      </view>
-      
-      <view class="filter-group">
-        <view class="filter-title">地点</view>
-        <view class="location-input">
-          <input type="text" v-model="filterParams.location" placeholder="请输入地点" />
-        </view>
-      </view>
-      
-      <view class="filter-group">
-        <view class="filter-title">发布时间</view>
-        <view class="time-options">
-          <view v-for="(opt, i) in timeOptions" :key="i"
-            :class="['time-opt', { active: filterParams.createdWithin === opt.value }]"
-            @tap="filterParams.createdWithin = opt.value">{{ opt.label }}</view>
-        </view>
-      </view>
-      
-      <view class="filter-buttons">
-        <button class="reset-btn" @click="resetFilters">重置</button>
-        <button class="confirm-btn" @click="applyFilters">确定</button>
-      </view>
-    </view>
-    
-    <!-- 任务列表 -->
-    <scroll-view 
-      class="task-list" 
-      scroll-y 
-      @scrolltolower="loadMore"
-      refresher-enabled
-      :refresher-triggered="isRefreshing"
-      @refresherrefresh="onRefresh">
-      <view class="task-item" v-for="(task, index) in taskList" :key="index" @click="viewTaskDetail(task)">
-        <view class="task-header">
-          <view class="task-title">{{ task.title }}</view>
-          <view class="task-tags">
-            <text class="tag urgent" v-if="task.urgent === 'yes'">急聘</text>
-            <text class="tag hot" v-if="task.hotJob === 'yes'">热门</text>
-          </view>
-        </view>
-        
-        <view class="task-info">
-          <view class="info-item">
-            <text class="label">薪资：</text>
-            <text class="value">¥{{ task.salary }}/天</text>
-          </view>
-          <view class="info-item">
-            <text class="label">地点：</text>
-            <text class="value">{{ task.location }}</text>
-          </view>
-          <view class="info-item">
-            <text class="label">时间：</text>
-            <text class="value">{{ formatTime(task.startTime) }} - {{ formatTime(task.endTime) }}</text>
-          </view>
-          <view class="info-item">
-            <text class="label">要求：</text>
-            <text class="value">{{ task.requirements }}</text>
-          </view>
-        </view>
-        
-        <view class="task-footer">
-          <view class="employer-info">
-            <image class="avatar" :src="task.employerAvatar || '/static/img/default-avatar.png'" mode="aspectFill"></image>
-            <text class="name">{{ task.employerName || '雇主' }}</text>
-          </view>
-          <view class="task-status" :class="{'status-open': task.status === 'open', 'status-closed': task.status === 'closed', 'status-canceled': task.status === 'canceled'}">
-            {{ getStatusText(task.status) }}
-          </view>
-        </view>
-      </view>
-      
-      <!-- 加载更多 -->
-      <view class="loading-more" v-if="isLoading">
-        <text>加载中...</text>
-      </view>
-      <view class="no-more" v-if="!hasMore && taskList.length > 0">
-        <text>没有更多了</text>
-      </view>
-      <view class="empty-state" v-if="!isLoading && taskList.length === 0">
-        <image src="/static/img/empty.png" mode="aspectFit"></image>
-        <text>暂无相关职位</text>
-      </view>
-    </scroll-view>
-    
+
+    <view v-if="loading" class="hint">加载中...</view>
+    <view v-else-if="!list.length" class="hint">暂无相关岗位</view>
+    <view v-else-if="!hasMore" class="hint">没有更多了</view>
+
+    <view class="tab-space"></view>
   </view>
 </template>
 
 <script>
-import API from '@/api/index.js'
+import api from '@/api/index.js'
 
 export default {
-  components: {
-    IdentitySwitch
-  },
   data() {
     return {
-      searchText: '',
-      currentSort: 'time',
-      sortOrder: 'desc',
-      sortOptions: [
-        { label: '最新发布', value: 'time' },
-        { label: '薪资高低', value: 'salary' }
-      ],
-      taskList: [],
-      isLoading: false,
+      keyword: '',
+      sort: '',
+      within: '',
+      list: [],
       page: 1,
-      limit: 10,
-      hasMore: true,
-      showFilters: false,
-      isRefreshing: false,
-      categoryId: '',
-      filterParams: {
-        minSalary: '',
-        maxSalary: '',
-        location: '',
-        createdWithin: ''
-      },
-      timeOptions: [
-        { label: '全部', value: '' },
-        { label: '24 小时内', value: 24 },
-        { label: '3 天内', value: 72 },
-        { label: '一周内', value: 168 }
-      ]
+      pageSize: 10,
+      total: 0,
+      loading: false,
+      hasMore: true
     }
   },
-  onLoad() {
-    this.fetchTasks()
-  },
+  onLoad() { this.reload() },
+  onPullDownRefresh() { this.reload(); uni.stopPullDownRefresh() },
+  onReachBottom() { this.loadMore() },
   methods: {
-    // 获取任务列表
-    async fetchTasks(isRefresh = false) {
-      if (isRefresh) {
-        this.page = 1
-        this.hasMore = true
+    ago(ts) {
+      if (!ts) return ''
+      const d = Date.now() - ts
+      const h = 3600 * 1000
+      if (d < h) return '刚刚'
+      if (d < 24 * h) return Math.floor(d / h) + ' 小时前'
+      if (d < 7 * 24 * h) return Math.floor(d / (24 * h)) + ' 天前'
+      return ''
+    },
+    setSort(v) { this.sort = v; this.reload() },
+    setWithin(v) { this.within = this.within === v ? '' : v; this.reload() },
+    params(page) {
+      return {
+        page,
+        pageSize: this.pageSize,
+        keyword: this.keyword || undefined,
+        sort: this.sort || undefined,
+        createdWithin: this.within || undefined
       }
-      
-      if (!this.hasMore || this.isLoading) return
-      
-      this.isLoading = true
-      
+    },
+    async reload() {
+      this.page = 1
+      this.hasMore = true
+      this.list = []
+      await this.fetch(true)
+    },
+    async loadMore() {
+      if (!this.hasMore || this.loading) return
+      this.page += 1
+      await this.fetch(false)
+    },
+    async fetch(reset) {
+      if (this.loading) return
+      this.loading = true
       try {
-        const params = {
-          page: this.page,
-          pageSize: this.limit,
-          keyword: this.searchText || undefined,
-          categoryId: this.categoryId || undefined,
-          city: this.filterParams.location || undefined,
-          minSalary: this.filterParams.minSalary || undefined,
-          maxSalary: this.filterParams.maxSalary || undefined,
-          createdWithin: this.filterParams.createdWithin || undefined,
-          sort: this.currentSort === 'time' ? undefined : this.currentSort
-        }
-        
-        const res = await API.getJobList(params)
-        
-        if (res.code === 0) {
-          const { records, totalPage } = res.data
-          
-          if (isRefresh) {
-            this.taskList = records
-          } else {
-            this.taskList = [...this.taskList, ...records]
-          }
-          
-          this.hasMore = this.page < totalPage
-          this.page++
-        } else {
-          uni.showToast({
-            title: res.message || '获取任务列表失败',
-            icon: 'none'
-          })
-        }
-      } catch (err) {
-        console.error('获取任务列表失败', err)
-        uni.showToast({
-          title: '获取任务列表失败',
-          icon: 'none'
-        })
+        const res = await api.getJobList(this.params(this.page))
+        const data = res.data || {}
+        const records = data.records || []
+        this.total = data.total || 0
+        this.list = reset ? records : this.list.concat(records)
+        this.hasMore = this.list.length < this.total
+      } catch (e) {
+        if (reset) this.list = []
       } finally {
-        this.isLoading = false
-        if (isRefresh) {
-          this.isRefreshing = false
-        }
+        this.loading = false
       }
     },
-    
-    // 切换排序
-    changeSort(sort) {
-      if (this.currentSort === sort) {
-        this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc'
-      } else {
-        this.currentSort = sort
-        this.sortOrder = 'desc'
-      }
-      this.fetchTasks(true)
-    },
-    
-    // 开始日期变化
-    onStartDateChange(e) {
-      this.filterParams.startDate = e.detail.value
-    },
-    
-    // 结束日期变化
-    onEndDateChange(e) {
-      this.filterParams.endDate = e.detail.value
-    },
-    
-    // 搜索
-    search() {
-      this.fetchTasks(true)
-    },
-    
-    // 显示筛选弹窗
-    showFilterPopup() {
-      this.showFilters = !this.showFilters
-    },
-    
-    // 重置筛选条件
-    resetFilters() {
-      this.filterParams = {
-        minSalary: '',
-        maxSalary: '',
-        location: '',
-        createdWithin: ''
-      }
-    },
-    
-    // 应用筛选条件
-    applyFilters() {
-      this.showFilters = false
-      this.fetchTasks(true)
-    },
-    
-    // 加载更多
-    loadMore() {
-      this.fetchTasks()
-    },
-    
-    // 下拉刷新
-    onRefresh() {
-      this.isRefreshing = true
-      this.fetchTasks(true)
-    },
-    
-    // 查看任务详情
-    viewTaskDetail(task) {
-      uni.navigateTo({
-        url: `/pages/jobDetail/jobDetail?id=${task.id}`
-      })
-    },
-    
-    // 格式化时间
-    formatTime(timeStr) {
-      if (!timeStr) return ''
-      const date = new Date(timeStr)
-      return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours()}:${date.getMinutes()}`
-    },
-    
-    // 获取状态文本
-    getStatusText(status) {
-      const statusMap = {
-        'open': '招聘中',
-        'closed': '已结束',
-        'canceled': '已取消'
-      }
-      return statusMap[status] || '未知状态'
-    },
-    
-  },
-  // 下拉刷新
-  onPullDownRefresh() {
-    this.fetchTasks(true)
-  },
-  // 上拉加载更多
-  onReachBottom() {
-    if (this.hasMore) {
-      this.fetchTasks()
+    goDetail(job) {
+      uni.navigateTo({ url: '/pages/jobDetail/jobDetail?id=' + job.id })
     }
   }
 }
 </script>
 
-<style lang="scss">
-.task-container {
-  min-height: 100vh;
-  background-color: #F5F5F5;
-  padding-bottom: 120rpx;
-}
-
-.search-bar {
-  display: flex;
-  padding: 20rpx 30rpx;
-  background-color: #FFFFFF;
-  
-  .search-input {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    background-color: #F5F5F5;
-    height: 72rpx;
-    border-radius: 36rpx;
-    padding: 0 30rpx;
-    
-    .cuIcon-search {
-      margin-right: 10rpx;
-      font-size: 36rpx;
-    }
-    
-    input {
-      flex: 1;
-      height: 100%;
-      font-size: 28rpx;
-    }
-  }
-  
-  .filter-btn {
-    width: 72rpx;
-    height: 72rpx;
-    background-color: #F5F5F5;
-    border-radius: 36rpx;
-    margin-left: 20rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    .cuIcon-filter {
-      font-size: 36rpx;
-      color: #666666;
-    }
-  }
-}
-
-/* ColorUI导航样式增强 */
-.nav {
-  white-space: nowrap;
-  height: 90rpx;
-  
-  .cu-item {
-    height: 90rpx;
-    font-size: 28rpx;
-    position: relative;
-    
-    &.cur {
-      font-weight: bold;
-      
-      &::after {
-        content: "";
-        width: 40rpx;
-        height: 6rpx;
-        border-radius: 20rpx;
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        margin: auto;
-      }
-    }
-  }
-}
-
-.filter-section {
-  background-color: #FFFFFF;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-  
-  .filter-group {
-    margin-bottom: 30rpx;
-    
-    .filter-title {
-      font-size: 28rpx;
-      color: #333;
-      margin-bottom: 20rpx;
-    }
-    
-    .filter-options {
-      display: flex;
-      flex-wrap: wrap;
-      
-      .filter-option {
-        padding: 10rpx 20rpx;
-        background-color: #F5F5F5;
-        border-radius: 30rpx;
-        font-size: 24rpx;
-        color: #666;
-        margin-right: 20rpx;
-        margin-bottom: 20rpx;
-        
-        &.active {
-          background-color: #4CAF50;
-          color: #FFFFFF;
-        }
-      }
-    }
-  }
-  
-  .filter-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 30rpx;
-    
-    button {
-      width: 45%;
-      height: 80rpx;
-      line-height: 80rpx;
-      text-align: center;
-      border-radius: 40rpx;
-      font-size: 28rpx;
-      
-      &.reset-btn {
-        background-color: #F5F5F5;
-        color: #666;
-      }
-      
-      &.confirm-btn {
-        background-color: #4CAF50;
-        color: #FFFFFF;
-      }
-    }
-  }
-}
-
-.task-list {
-  padding: 20rpx;
-  height: calc(100vh - 240rpx);
-  
-  .task-item {
-    background-color: #FFFFFF;
-    border-radius: 16rpx;
-    padding: 30rpx;
-    margin-bottom: 20rpx;
-    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
-    
-    .task-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20rpx;
-      
-      .task-title {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #333;
-      }
-      
-      .task-tags {
-        display: flex;
-        
-        .tag {
-          padding: 4rpx 12rpx;
-          border-radius: 20rpx;
-          font-size: 22rpx;
-          margin-left: 10rpx;
-          
-          &.urgent {
-            background-color: #FF5722;
-            color: #FFFFFF;
-          }
-          
-          &.hot {
-            background-color: #FF9800;
-            color: #FFFFFF;
-          }
-        }
-      }
-    }
-    
-    .task-info {
-      .info-item {
-        display: flex;
-        margin-bottom: 16rpx;
-        
-        .label {
-          width: 100rpx;
-          font-size: 26rpx;
-          color: #999;
-        }
-        
-        .value {
-          flex: 1;
-          font-size: 26rpx;
-          color: #333;
-        }
-      }
-    }
-    
-    .task-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 20rpx;
-      padding-top: 20rpx;
-      border-top: 1rpx solid #EEEEEE;
-      
-      .employer-info {
-        display: flex;
-        align-items: center;
-        
-        .avatar {
-          width: 48rpx;
-          height: 48rpx;
-          border-radius: 50%;
-          margin-right: 10rpx;
-        }
-        
-        .name {
-          font-size: 26rpx;
-          color: #666;
-        }
-      }
-      
-      .task-status {
-        font-size: 24rpx;
-        padding: 4rpx 16rpx;
-        border-radius: 20rpx;
-        
-        &.status-open {
-          background-color: #E8F5E9;
-          color: #4CAF50;
-        }
-        
-        &.status-closed {
-          background-color: #F5F5F5;
-          color: #999;
-        }
-        
-        &.status-canceled {
-          background-color: #FFEBEE;
-          color: #F44336;
-        }
-      }
-    }
-  }
-  
-  .loading-more, .no-more, .empty-state {
-    text-align: center;
-    padding: 30rpx;
-    color: #999;
-    font-size: 26rpx;
-  }
-  
-  .empty-state {
-    image {
-      width: 200rpx;
-      height: 200rpx;
-      margin-bottom: 20rpx;
-    }
-  }
-}
-
-.category-nav {
-  background-color: #FFFFFF;
-  white-space: nowrap;
-  padding: 20rpx 0;
-  margin-bottom: 20rpx;
-  
-  .category-list {
-    display: inline-flex;
-    padding: 0 20rpx;
-    
-    .category-item {
-      padding: 10rpx 30rpx;
-      font-size: 28rpx;
-      color: #666;
-      position: relative;
-      margin-right: 20rpx;
-      
-      &.active {
-        color: #4CAF50;
-        font-weight: bold;
-        
-        &::after {
-          content: '';
-          position: absolute;
-          bottom: -10rpx;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 40rpx;
-          height: 4rpx;
-          background-color: #4CAF50;
-          border-radius: 2rpx;
-        }
-      }
-    }
-  }
-}
-
-.sort-bar {
-  display: flex;
-  background-color: #FFFFFF;
-  padding: 20rpx 30rpx;
-  margin-bottom: 20rpx;
-  
-  .sort-item {
-    flex: 1;
-    text-align: center;
-    font-size: 28rpx;
-    color: #666;
-    position: relative;
-    
-    &.active {
-      color: #4CAF50;
-      font-weight: bold;
-    }
-    
-    .sort-icon {
-      margin-left: 4rpx;
-    }
-  }
-}
-
-.time-options { display: flex; flex-wrap: wrap; }
-.time-opt { padding: 10rpx 24rpx; margin: 0 16rpx 16rpx 0; border-radius: 30rpx; background: #f5f6f8; font-size: 26rpx; color: #666; }
-.time-opt.active { background: #1976d2; color: #fff; }
-.salary-range {
-  display: flex;
-  align-items: center;
-  padding: 20rpx;
-  
-  input {
-    flex: 1;
-    height: 60rpx;
-    background-color: #F5F5F5;
-    border-radius: 8rpx;
-    padding: 0 20rpx;
-    font-size: 28rpx;
-  }
-  
-  .range-separator {
-    margin: 0 20rpx;
-    color: #999;
-  }
-}
-
-.location-input {
-  padding: 20rpx;
-  background-color: #F5F5F5;
-  border-radius: 8rpx;
-  
-  input {
-    width: 100%;
-    height: 60rpx;
-    font-size: 28rpx;
-  }
-}
-
-.date-range {
-  display: flex;
-  align-items: center;
-  padding: 20rpx;
-  
-  .date-picker {
-    flex: 1;
-    height: 60rpx;
-    line-height: 60rpx;
-    text-align: center;
-    background-color: #F5F5F5;
-    border-radius: 8rpx;
-    font-size: 28rpx;
-    color: #333;
-  }
-  
-  .date-separator {
-    margin: 0 20rpx;
-    color: #999;
-  }
-}
-</style> 
+<style lang="scss" scoped>
+.page { min-height: 100vh; background: #f5f6f8; }
+.search-box { background: #fff; padding: 16rpx 24rpx; }
+.search-bar { display: flex; align-items: center; background: #f5f6f8; border-radius: 40rpx; padding: 0 24rpx; height: 72rpx; }
+.search-bar input { flex: 1; font-size: 28rpx; }
+.btn { color: #1976d2; font-size: 28rpx; padding-left: 16rpx; }
+.filter-bar { display: flex; background: #fff; padding: 0 24rpx 20rpx; }
+.chip { padding: 8rpx 24rpx; margin-right: 16rpx; border-radius: 30rpx; background: #f5f6f8; color: #666; font-size: 24rpx; }
+.chip.active { background: #1976d2; color: #fff; }
+.list { padding: 20rpx; }
+.item { background: #fff; border-radius: 16rpx; padding: 28rpx; margin-bottom: 20rpx; }
+.head { display: flex; justify-content: space-between; align-items: center; }
+.title-row { display: flex; align-items: center; flex: 1; }
+.title { font-size: 34rpx; font-weight: 600; margin-right: 12rpx; }
+.badge { font-size: 20rpx; padding: 2rpx 10rpx; border-radius: 6rpx; margin-right: 8rpx; }
+.badge.top { background: #fff7e6; color: #fa8c16; }
+.badge.urgent { background: #fff1f0; color: #e54d42; }
+.salary { color: #e54d42; font-size: 34rpx; font-weight: 700; }
+.unit { font-size: 22rpx; font-weight: 400; }
+.meta { margin-top: 12rpx; font-size: 26rpx; color: #666; }
+.foot { margin-top: 12rpx; display: flex; justify-content: space-between; font-size: 24rpx; color: #999; }
+.hint { text-align: center; color: #999; font-size: 26rpx; padding: 40rpx 0; }
+.tab-space { height: 40rpx; }
+</style>
