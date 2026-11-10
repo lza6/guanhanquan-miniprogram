@@ -69,6 +69,8 @@ exports.overview = async () => {
       newUsers: await count('users', { createdAt: L.cmd().gte(startOfDay) }),
       newJobs: await count('jobs', { createdAt: L.cmd().gte(startOfDay) })
     },
+    activeToday: await count('users', { lastLoginAt: L.cmd().gte(startOfDay) }),
+    pendingFeedback: await count('feedback', { status: 0 }),
     byCategory: dist.byCategory,
     byRegion: dist.byRegion
   })
@@ -234,4 +236,27 @@ exports.finance = async (ctx) => {
     id: r._id, openid: r.openid, type: r.type, amount: r.amount,
     businessType: r.businessType, remark: r.remark, createdAt: r.createdAt
   })), total, page, pageSize), { rechargeTotal, consumeInPage: consume, paidOrderCount: paidOrders.data.length }))
+}
+
+/* ---------- 客服 / 意见反馈 ---------- */
+exports.feedback = async (ctx) => {
+  const { page, pageSize, skip } = L.pager(ctx.data)
+  const w = {}
+  if (ctx.data.status !== undefined && ctx.data.status !== '') w.status = Number(ctx.data.status)
+  const coll = L.db().collection('feedback').where(w)
+  const total = (await coll.count()).total
+  const res = await coll.orderBy('createdAt', 'desc').skip(skip).limit(pageSize).get()
+  return L.ok(L.listResult(res.data.map((f) => ({
+    id: f._id, type: f.type, content: f.content, contact: f.contact,
+    images: f.images || [], status: f.status, createdAt: f.createdAt
+  })), total, page, pageSize))
+}
+
+exports.handleFeedback = async (ctx) => {
+  const status = Number(ctx.data.status)
+  if (![0, 1, 2].includes(status)) return L.fail('状态值不合法')
+  await L.db().collection('feedback').doc(ctx.params.id).update({
+    data: { status, handleRemark: String(ctx.data.remark || ''), handleTime: Date.now() }
+  })
+  return L.ok({ id: ctx.params.id, status })
 }

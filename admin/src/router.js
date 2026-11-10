@@ -8,6 +8,7 @@ import Blacklist from './views/Blacklist.vue'
 import Reports from './views/Reports.vue'
 import Banners from './views/Banners.vue'
 import Finance from './views/Finance.vue'
+import Feedback from './views/Feedback.vue'
 
 const routes = [
   { path: '/login', component: Login, meta: { public: true } },
@@ -22,7 +23,8 @@ const routes = [
       { path: 'blacklist', component: Blacklist, meta: { title: '黑老板库' } },
       { path: 'reports', component: Reports, meta: { title: '举报处理' } },
       { path: 'banners', component: Banners, meta: { title: '轮播图' } },
-      { path: 'finance', component: Finance, meta: { title: '财务流水' } }
+      { path: 'finance', component: Finance, meta: { title: '财务流水' } },
+      { path: 'feedback', component: Feedback, meta: { title: '客服反馈' } }
     ]
   }
 ]

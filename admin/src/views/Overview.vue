@@ -7,6 +7,8 @@
       <div class="stat-card danger"><div class="label">待处理黑名单</div><div class="value">{{ d.blacklistPending }}</div></div>
       <div class="stat-card danger"><div class="label">待处理举报</div><div class="value">{{ d.reportsPending }}</div></div>
       <div class="stat-card"><div class="label">报名总数</div><div class="value">{{ d.applications }}</div></div>
+      <div class="stat-card success"><div class="label">今日活跃</div><div class="value">{{ d.activeToday }}</div></div>
+      <div class="stat-card warn"><div class="label">待处理反馈</div><div class="value">{{ d.pendingFeedback }}</div></div>
     </div>
 
     <div class="page-card" style="margin-top: 16px">
@@ -52,7 +54,7 @@ import { ElMessage } from 'element-plus'
 import api from '../api'
 
 const d = reactive({
-  byCategory: [], byRegion: [],
+  byCategory: [], byRegion: [], activeToday: 0, pendingFeedback: 0,
   users: 0, applications: 0, blacklistPending: 0, reportsPending: 0,
   jobs: { total: 0, pending: 0, online: 0, rejected: 0 },
   today: { newUsers: 0, newJobs: 0 }

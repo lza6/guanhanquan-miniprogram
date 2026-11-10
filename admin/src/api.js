@@ -39,7 +39,10 @@ export const api = {
   saveBanner: (data) => http.post('/admin/banners', data),
   deleteBanner: (id) => http.delete(`/admin/banners/${id}`),
 
-  finance: (params) => http.get('/admin/finance', { params })
+  finance: (params) => http.get('/admin/finance', { params }),
+
+  feedback: (params) => http.get('/admin/feedback', { params }),
+  handleFeedback: (id, data) => http.post(`/admin/feedback/${id}/handle`, data)
 }
 
 export default api

@@ -108,7 +108,9 @@ const ROUTES = [
   ['GET', '/admin/banners', handlers.admin.banners, 'admin'],
   ['POST', '/admin/banners', handlers.admin.saveBanner, 'admin'],
   ['DELETE', '/admin/banners/:id', handlers.admin.deleteBanner, 'admin'],
-  ['GET', '/admin/finance', handlers.admin.finance, 'admin']
+  ['GET', '/admin/finance', handlers.admin.finance, 'admin'],
+  ['GET', '/admin/feedback', handlers.admin.feedback, 'admin'],
+  ['POST', '/admin/feedback/:id/handle', handlers.admin.handleFeedback, 'admin']
 ]
 
 function match(pattern, path) {

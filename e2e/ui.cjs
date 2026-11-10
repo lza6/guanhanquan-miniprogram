@@ -166,6 +166,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   const btn2 = await d2.$('.primary')
   check('报名后按钮变已报名', !!btn2 && (await btn2.text()) === '已报名', btn2 ? await btn2.text() : '无')
 
+  // 15. 消息通知（老板已录用）
+  await mp.navigateTo('/pages/message/index')
+  await sleep(2200)
+  await shot('13-message')
+  const msgp = await mp.currentPage()
+  const mt = await msgp.$('.title')
+  check('消息页显示录用通知', !!mt && (await mt.text()).indexOf('报名已通过') >= 0, mt ? await mt.text() : '空')
+
   console.log('\n结果: ' + pass + ' 通过, ' + fail + ' 失败')
   if (fails.length) console.log('失败项: ' + fails.join(' / '))
   await mp.disconnect()

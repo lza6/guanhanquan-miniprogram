@@ -10,6 +10,7 @@
         <el-menu-item index="/reports">举报处理</el-menu-item>
         <el-menu-item index="/banners">轮播图</el-menu-item>
         <el-menu-item index="/finance">财务流水</el-menu-item>
+        <el-menu-item index="/feedback">客服反馈</el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
