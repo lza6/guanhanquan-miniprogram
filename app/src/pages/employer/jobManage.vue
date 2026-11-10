@@ -128,6 +128,7 @@
 </template>
 
 <script>
+import api from '@/api/index.js'
 export default {
   data() {
     return {
@@ -140,73 +141,7 @@ export default {
         { name: '已暂停', count: 1 },
         { name: '已过期', count: 1 }
       ],
-      jobs: [
-        {
-          id: '1',
-          title: '外卖骑手',
-          status: 'published',
-          statusText: '已发布',
-          statusClass: 'success',
-          location: '思明区莲前街道',
-          salary: '6000-8000元/月',
-          publishTime: '2023-05-01',
-          viewCount: 256,
-          applyCount: 18,
-          hiredCount: 3
-        },
-        {
-          id: '2',
-          title: '仓库理货员',
-          status: 'published',
-          statusText: '已发布',
-          statusClass: 'success',
-          location: '湖里区金山街道',
-          salary: '150元/天',
-          publishTime: '2023-05-05',
-          viewCount: 180,
-          applyCount: 12,
-          hiredCount: 5
-        },
-        {
-          id: '3',
-          title: '快递分拣员',
-          status: 'paused',
-          statusText: '已暂停',
-          statusClass: 'warning',
-          location: '集美区杏林街道',
-          salary: '4500-5500元/月',
-          publishTime: '2023-04-20',
-          viewCount: 198,
-          applyCount: 15,
-          hiredCount: 8
-        },
-        {
-          id: '4',
-          title: '商场导购员',
-          status: 'pending',
-          statusText: '审核中',
-          statusClass: 'info',
-          location: '思明区嘉莲街道',
-          salary: '4000-5000元/月',
-          publishTime: '2023-05-08',
-          viewCount: 86,
-          applyCount: 4,
-          hiredCount: 0
-        },
-        {
-          id: '5',
-          title: '小区保安',
-          status: 'expired',
-          statusText: '已过期',
-          statusClass: 'default',
-          location: '湖里区金山街道',
-          salary: '5000元/月',
-          publishTime: '2023-03-15',
-          viewCount: 310,
-          applyCount: 25,
-          hiredCount: 10
-        }
-      ],
+      jobs: [],
       filters: {
         timeRange: '',
         salaryRange: ''
@@ -253,7 +188,36 @@ export default {
       return result
     }
   },
+  onLoad() {
+    this.loadJobs()
+  },
   methods: {
+    async loadJobs() {
+      try {
+        const res = await api.getEmployerJobs({ page: 1, pageSize: 50 })
+        const map = { 0: '待审核', 1: '已发布', 2: '已下架', 3: '已过期', 4: '已驳回' }
+        const cls = { 0: 'warning', 1: 'success', 2: 'info', 3: 'info', 4: 'danger' }
+        this.jobs = (res.data.records || []).map((j) => ({
+          id: j.id,
+          title: j.title,
+          status: j.status,
+          statusText: map[j.status] || '未知',
+          statusClass: cls[j.status] || 'info',
+          location: j.workArea,
+          salary: j.salary + ' 元/天',
+          publishTime: this.formatTime(j.createdAt),
+          viewCount: j.viewCount || 0,
+          applyCount: j.applyCount || 0,
+          hiredCount: 0
+        }))
+      } catch (e) {
+        this.jobs = []
+      }
+    },
+    formatTime(ts) {
+      const d = new Date(ts)
+      return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate()
+    },
     switchTab(index) {
       this.activeTab = index
     },

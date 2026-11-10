@@ -190,3 +190,59 @@ exports.createReport = async (ctx) => {
   })
   return L.ok({ id: add._id })
 }
+
+/* ---------- 意见反馈 ---------- */
+exports.createFeedback = async (ctx) => {
+  const content = String((ctx.data && ctx.data.content) || '').trim()
+  if (content.length < 5) return L.fail('请至少写 5 个字')
+  const add = await L.db().collection('feedback').add({
+    data: {
+      openid: ctx.openid,
+      type: Number(ctx.data.type || 1),
+      content: content.slice(0, 500),
+      contact: String(ctx.data.contact || '').slice(0, 50),
+      images: Array.isArray(ctx.data.images) ? ctx.data.images.slice(0, 3) : [],
+      status: 0,
+      createdAt: Date.now()
+    }
+  })
+  return L.ok({ id: add._id })
+}
+
+/* ---------- 我的课程 ---------- */
+exports.myCourses = async (ctx) => {
+  const enrolls = await L.db().collection('training_enrolls')
+    .where({ openid: ctx.openid }).orderBy('createdAt', 'desc').limit(50).get()
+  if (!enrolls.data.length) return L.ok({ records: [], total: 0, totalPage: 1 })
+
+  const ids = enrolls.data.map((e) => e.trainingId)
+  const trainings = await L.db().collection('trainings').where({ _id: L.cmd().in(ids) }).get()
+  const map = {}
+  trainings.data.forEach((t) => { map[t._id] = t })
+
+  const records = enrolls.data.filter((e) => map[e.trainingId]).map((e) => {
+    const t = map[e.trainingId]
+    return {
+      id: e._id,
+      trainingId: e.trainingId,
+      title: t.title,
+      cover: t.cover,
+      teacher: t.teacher,
+      enrolledAt: e.createdAt
+    }
+  })
+  return L.ok({ records, total: records.length, totalPage: 1 })
+}
+
+/** 我的反馈记录 */
+exports.myFeedback = async (ctx) => {
+  const res = await L.db().collection('feedback')
+    .where({ openid: ctx.openid }).orderBy('createdAt', 'desc').limit(50).get()
+  return L.ok({
+    records: res.data.map((f) => ({
+      id: f._id, content: f.content, type: f.type, status: f.status, createdAt: f.createdAt
+    })),
+    total: res.data.length,
+    totalPage: 1
+  })
+}

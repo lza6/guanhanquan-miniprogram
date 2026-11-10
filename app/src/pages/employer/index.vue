@@ -282,12 +282,12 @@ export default {
     },
     editProfile() {
       uni.navigateTo({
-        url: '/pages/user/profile'
+        url: '/pages/mine/mine'
       })
     },
     goToSettings() {
       uni.navigateTo({
-        url: '/pages/employer/settings'
+        url: '/pages/employer/certification'
       })
     }
   }

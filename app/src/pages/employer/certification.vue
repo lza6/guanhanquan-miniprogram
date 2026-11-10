@@ -135,6 +135,7 @@
 </template>
 
 <script>
+import api from '@/api/index.js'
 export default {
   data() {
     return {
@@ -191,7 +192,7 @@ export default {
     },
     
     // 提交表单
-    submitForm() {
+    async submitForm() {
       // 表单验证
       if (!this.formData.companyName) {
         return this.showError('请输入企业名称')
@@ -215,24 +216,25 @@ export default {
         return this.showError('请上传营业执照')
       }
       
-      // 提交表单
-      uni.showLoading({
-        title: '提交中...'
-      })
-      
-      // 模拟API请求
-      setTimeout(() => {
+      uni.showLoading({ title: '提交中...' })
+      try {
+        await api.updateEmployerProfile({
+          companyName: this.formData.companyName,
+          creditCode: this.formData.creditCode,
+          license: this.formData.license,
+          address: (this.formData.region || '') + (this.formData.address || ''),
+          contactName: this.formData.legalPerson
+        })
         uni.hideLoading()
         uni.showModal({
-          title: '认证申请已提交',
-          content: '您的企业认证申请已提交，我们将在1-3个工作日内完成审核，请耐心等待。',
+          title: '资料已提交',
+          content: '平台会在 1-3 个工作日内核验，通过后展示认证标识。',
           showCancel: false,
-          success: () => {
-            // 返回上一页
-            uni.navigateBack()
-          }
+          success: () => uni.navigateBack()
         })
-      }, 1500)
+      } catch (e) {
+        uni.hideLoading()
+      }
     },
     
     // 显示错误提示

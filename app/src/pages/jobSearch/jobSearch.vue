@@ -49,15 +49,11 @@
       </view>
       
       <view class="filter-group">
-        <view class="filter-title">时间范围</view>
-        <view class="date-range">
-          <picker mode="date" :value="filterParams.startDate" @change="onStartDateChange">
-            <view class="date-picker">{{ filterParams.startDate || '开始日期' }}</view>
-          </picker>
-          <text class="date-separator">至</text>
-          <picker mode="date" :value="filterParams.endDate" @change="onEndDateChange">
-            <view class="date-picker">{{ filterParams.endDate || '结束日期' }}</view>
-          </picker>
+        <view class="filter-title">发布时间</view>
+        <view class="time-options">
+          <view v-for="(opt, i) in timeOptions" :key="i"
+            :class="['time-opt', { active: filterParams.createdWithin === opt.value }]"
+            @tap="filterParams.createdWithin = opt.value">{{ opt.label }}</view>
         </view>
       </view>
       
@@ -156,13 +152,19 @@ export default {
       hasMore: true,
       showFilters: false,
       isRefreshing: false,
+      categoryId: '',
       filterParams: {
         minSalary: '',
         maxSalary: '',
         location: '',
-        startDate: '',
-        endDate: ''
-      }
+        createdWithin: ''
+      },
+      timeOptions: [
+        { label: '全部', value: '' },
+        { label: '24 小时内', value: 24 },
+        { label: '3 天内', value: 72 },
+        { label: '一周内', value: 168 }
+      ]
     }
   },
   onLoad() {
@@ -183,13 +185,14 @@ export default {
       try {
         const params = {
           page: this.page,
-          size: this.limit,
-          search: this.searchText,
-          status: 'open',
-          sortBy: this.currentSort,
-          sortOrder: this.sortOrder,
+          pageSize: this.limit,
+          keyword: this.searchText || undefined,
+          categoryId: this.categoryId || undefined,
+          city: this.filterParams.location || undefined,
           minSalary: this.filterParams.minSalary || undefined,
-          maxSalary: this.filterParams.maxSalary || undefined
+          maxSalary: this.filterParams.maxSalary || undefined,
+          createdWithin: this.filterParams.createdWithin || undefined,
+          sort: this.currentSort === 'time' ? undefined : this.currentSort
         }
         
         const res = await API.getJobList(params)
@@ -262,8 +265,7 @@ export default {
         minSalary: '',
         maxSalary: '',
         location: '',
-        startDate: '',
-        endDate: ''
+        createdWithin: ''
       }
     },
     
@@ -650,6 +652,9 @@ export default {
   }
 }
 
+.time-options { display: flex; flex-wrap: wrap; }
+.time-opt { padding: 10rpx 24rpx; margin: 0 16rpx 16rpx 0; border-radius: 30rpx; background: #f5f6f8; font-size: 26rpx; color: #666; }
+.time-opt.active { background: #1976d2; color: #fff; }
 .salary-range {
   display: flex;
   align-items: center;

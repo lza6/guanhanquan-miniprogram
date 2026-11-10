@@ -1,35 +1,24 @@
 <template>
   <view class="job-card" @click="goToDetail">
     <view class="job-header">
-      <view class="job-title">{{job.title}}</view>
-      <view class="job-salary">{{job.salary}}</view>
-    </view>
-    <view class="job-info">
-      <view class="job-tag" v-if="job.isUrgent">
-        <uni-icons type="fire" size="12" color="#FF5722"></uni-icons>
-        <text>急招</text>
+      <view class="title-wrap">
+        <text class="job-title">{{ job.title }}</text>
+        <text v-if="job.isTop" class="badge top">置顶</text>
+        <text v-if="job.isUrgent" class="badge urgent">急招</text>
       </view>
-      <view class="job-tag" v-if="job.payType === 'daily'">
-        <uni-icons type="wallet" size="12" color="#4CAF50"></uni-icons>
-        <text>日结</text>
-      </view>
-      <view class="job-tag" v-if="job.hasInsurance">
-        <uni-icons type="safety" size="12" color="#1976D2"></uni-icons>
-        <text>益鹭保</text>
-      </view>
+      <text class="job-salary">{{ job.salary }}<text class="unit">元/天</text></text>
     </view>
-    <view class="job-company">
-      <image class="company-logo" :src="job.companyLogo || '/static/default-logo.png'" mode="aspectFill"></image>
-      <text class="company-name">{{job.companyName}}</text>
-      <text class="job-distance">{{job.distance}}</text>
+
+    <view class="job-meta">
+      <text class="meta-item">{{ job.workArea }}</text>
+      <text v-if="job.duration" class="meta-item">{{ job.duration }}</text>
+      <text v-if="job.distance !== undefined && job.distance !== null" class="meta-item distance">{{ job.distance }} km</text>
     </view>
-    <view class="job-address">
-      <uni-icons type="location" size="14" color="#999"></uni-icons>
-      <text>{{job.address}}</text>
-    </view>
-    <view class="job-time">
-      <uni-icons type="calendar" size="14" color="#999"></uni-icons>
-      <text>{{job.workTime}}</text>
+
+    <view class="job-footer">
+      <text v-if="job.employerName" class="company">{{ job.employerName }}</text>
+      <text v-if="job.employerVerified" class="verified">已认证</text>
+      <text v-if="job.createdAt" class="time">{{ formatTime(job.createdAt) }}</text>
     </view>
   </view>
 </template>
@@ -44,108 +33,53 @@ export default {
         id: '',
         title: '',
         salary: '',
-        companyName: '',
-        companyLogo: '',
+        workArea: '',
+        duration: '',
+        isTop: false,
         isUrgent: false,
-        payType: '',
-        hasInsurance: false,
-        address: '',
-        distance: '',
-        workTime: ''
+        employerName: '',
+        employerVerified: false,
+        createdAt: 0
       })
     }
   },
   methods: {
+    formatTime(ts) {
+      const diff = Date.now() - ts
+      const hour = 3600 * 1000
+      if (diff < hour) return '刚刚'
+      if (diff < 24 * hour) return Math.floor(diff / hour) + ' 小时前'
+      if (diff < 7 * 24 * hour) return Math.floor(diff / (24 * hour)) + ' 天前'
+      const d = new Date(ts)
+      return (d.getMonth() + 1) + '月' + d.getDate() + '日'
+    },
     goToDetail() {
-      uni.navigateTo({
-        url: `/pages/jobDetail/jobDetail?id=${this.job.id}`
-      })
+      uni.navigateTo({ url: '/pages/jobDetail/jobDetail?id=' + this.job.id })
     }
   }
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .job-card {
-  background-color: #FFFFFF;
-  border-radius: 12rpx;
-  padding: 20rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx;
   margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.05);
-  
-  .job-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16rpx;
-    
-    .job-title {
-      font-size: 32rpx;
-      font-weight: bold;
-      color: #333;
-    }
-    
-    .job-salary {
-      font-size: 32rpx;
-      font-weight: bold;
-      color: #FF5722;
-    }
-  }
-  
-  .job-info {
-    display: flex;
-    margin-bottom: 16rpx;
-    
-    .job-tag {
-      display: flex;
-      align-items: center;
-      background-color: #F5F5F5;
-      border-radius: 6rpx;
-      padding: 4rpx 12rpx;
-      margin-right: 12rpx;
-      
-      text {
-        font-size: 24rpx;
-        color: #666;
-        margin-left: 6rpx;
-      }
-    }
-  }
-  
-  .job-company {
-    display: flex;
-    align-items: center;
-    margin-bottom: 16rpx;
-    
-    .company-logo {
-      width: 40rpx;
-      height: 40rpx;
-      border-radius: 50%;
-      margin-right: 10rpx;
-    }
-    
-    .company-name {
-      font-size: 28rpx;
-      color: #666;
-      flex: 1;
-    }
-    
-    .job-distance {
-      font-size: 24rpx;
-      color: #999;
-    }
-  }
-  
-  .job-address, .job-time {
-    display: flex;
-    align-items: center;
-    font-size: 26rpx;
-    color: #999;
-    margin-top: 10rpx;
-    
-    text {
-      margin-left: 10rpx;
-    }
-  }
 }
-</style> 
+.job-header { display: flex; align-items: center; justify-content: space-between; }
+.title-wrap { display: flex; align-items: center; flex: 1; min-width: 0; }
+.job-title { font-size: 34rpx; font-weight: 600; color: #222; margin-right: 12rpx; }
+.badge { font-size: 20rpx; padding: 2rpx 10rpx; border-radius: 6rpx; margin-right: 8rpx; }
+.badge.top { background: #fff7e6; color: #fa8c16; }
+.badge.urgent { background: #fff1f0; color: #e54d42; }
+.job-salary { color: #e54d42; font-size: 36rpx; font-weight: 700; }
+.unit { font-size: 22rpx; font-weight: 400; }
+.job-meta { margin-top: 14rpx; display: flex; flex-wrap: wrap; }
+.meta-item { font-size: 26rpx; color: #666; margin-right: 20rpx; }
+.meta-item.distance { color: #1976d2; }
+.job-footer { margin-top: 14rpx; display: flex; align-items: center; font-size: 24rpx; color: #999; }
+.company { margin-right: 12rpx; }
+.verified { color: #52c41a; border: 1rpx solid #52c41a; border-radius: 4rpx; padding: 0 8rpx; font-size: 20rpx; margin-right: 12rpx; }
+.time { margin-left: auto; }
+</style>

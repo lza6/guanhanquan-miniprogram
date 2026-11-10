@@ -60,29 +60,19 @@
 </template>
 
 <script>
+import api from '@/api/index.js'
+
 export default {
   data() {
     return {
       activeTab: 'feedback',
       content: '',
       images: [],
-      records: [
-        {
-          id: 1,
-          time: '2023-05-09 10:23',
-          content: '建议增加更多的岗位类别，方便求职者筛选。',
-          status: 'processed',
-          statusText: '已处理'
-        },
-        {
-          id: 2,
-          time: '2023-05-01 15:45',
-          content: '小程序有时会卡顿，希望优化一下体验。',
-          status: 'pending',
-          statusText: '处理中'
-        }
-      ]
+      records: []
     }
+  },
+  onShow() {
+    this.loadRecords()
   },
   methods: {
     chooseImage() {
@@ -106,46 +96,46 @@ export default {
     deleteImage(index) {
       this.images.splice(index, 1)
     },
-    submitFeedback() {
+    async submitFeedback() {
       if (!this.content.trim()) {
-        uni.showToast({
-          title: '请输入反馈内容',
-          icon: 'none'
-        })
+        uni.showToast({ title: '请输入反馈内容', icon: 'none' })
         return
       }
-      
-      uni.showLoading({
-        title: '提交中...'
-      })
-      
-      // 模拟提交
-      setTimeout(() => {
+      uni.showLoading({ title: '提交中...' })
+      try {
+        const images = []
+        for (const p of this.images) {
+          images.push(await api.uploadFile(p, 'feedback'))
+        }
+        await api.submitFeedback({ content: this.content, type: 1, images })
         uni.hideLoading()
-        uni.showToast({
-          title: '提交成功',
-          icon: 'success'
-        })
-        
-        // 清空表单
+        uni.showToast({ title: '提交成功', icon: 'success' })
         this.content = ''
         this.images = []
-        
-        // 切换到记录页
         this.activeTab = 'record'
-        
-        // 添加新记录
-        const now = new Date()
-        const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-        
-        this.records.unshift({
-          id: this.records.length + 1,
-          time: timeStr,
-          content: this.content,
-          status: 'pending',
-          statusText: '处理中'
-        })
-      }, 1500)
+        this.loadRecords()
+      } catch (e) {
+        uni.hideLoading()
+      }
+    },
+    async loadRecords() {
+      try {
+        const res = await api.getMyFeedback()
+        this.records = (res.data.records || []).map((r) => ({
+          id: r.id,
+          time: this.formatTime(r.createdAt),
+          content: r.content,
+          status: r.status === 0 ? 'pending' : 'processed',
+          statusText: r.status === 0 ? '处理中' : '已处理'
+        }))
+      } catch (e) {
+        this.records = []
+      }
+    },
+    formatTime(ts) {
+      const d = new Date(ts)
+      const p = (n) => String(n).padStart(2, '0')
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes())
     }
   }
 }

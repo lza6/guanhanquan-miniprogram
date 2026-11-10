@@ -5,10 +5,7 @@
 <script>
 export default {
   onLoad() {
-    // 重定向到新路径
-    uni.redirectTo({
-      url: '/pages/employer/postJob/index'
-    })
+    uni.redirectTo({ url: '/pages/employer/jobPost' })
   }
 }
-</script> 
+</script>

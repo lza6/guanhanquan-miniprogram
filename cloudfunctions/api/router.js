@@ -78,6 +78,7 @@ const ROUTES = [
   ['GET', '/trainings/list', handlers.social.trainings, 'none'],
   ['GET', '/trainings/detail/:id', handlers.social.trainingDetail, 'none'],
   ['POST', '/trainings/enroll/:id', handlers.social.enrollTraining, 'user'],
+  ['GET', '/trainings/my', handlers.social.myCourses, 'user'],
 
   // 钱包
   ['GET', '/wallet/info', handlers.wallet.info, 'user'],
@@ -89,6 +90,8 @@ const ROUTES = [
   ['GET', '/blacklist/query', handlers.blacklist.query, 'user'],
   ['POST', '/blacklist/submit', handlers.blacklist.submit, 'user'],
   ['POST', '/reports/create', handlers.social.createReport, 'user'],
+  ['POST', '/feedback/create', handlers.social.createFeedback, 'user'],
+  ['GET', '/feedback/list', handlers.social.myFeedback, 'user'],
 
   // 管理后台
   ['POST', '/admin/login', handlers.admin.login, 'none'],

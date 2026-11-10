@@ -13,6 +13,7 @@ export default {
 	updateUserProfile: (data) => put('/users/profile', data),
 	sendSmsCode: (phone) => post('/auth/sms-code/send', { phone }),
 	verifySmsCode: (phone, code) => post('/auth/sms-code/verify', { phone, code }),
+	bindPhone: (code) => post('/auth/bind-phone', { code }),
 
 	// 招工方
 	getEmployerProfile: () => get('/employers/profile'),
@@ -73,6 +74,7 @@ export default {
 	// 培训
 	getTrainingList: (params) => get('/trainings/list', params),
 	getTrainingDetail: (id) => get(`/trainings/detail/${id}`),
+	getMyCourses: () => get('/trainings/my'),
 	enrollTraining: (id) => post(`/trainings/enroll/${id}`),
 
 	// 收藏
@@ -93,6 +95,9 @@ export default {
 	unlockContact: (jobId) => post(`/jobs/contact/${jobId}`),
 	recharge: (data) => post('/wallet/recharge', data),
 	signIn: () => post('/wallet/sign-in'),
+
+	submitFeedback: (data) => post('/feedback/create', data),
+	getMyFeedback: () => get('/feedback/list'),
 
 	// 上传
 	uploadFile: (filePath, dir) => uploadToCloud(filePath, dir)

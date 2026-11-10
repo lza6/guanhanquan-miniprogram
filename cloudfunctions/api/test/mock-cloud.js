@@ -197,60 +197,9 @@ Module._load = function (request) {
 }
 
 
-/** 本地演示数据，仅在开发环境调用 */
 function seedDemo() {
   if (coll('users').length) return
-  const now = Date.now()
-  const day = 86400000
-  const u = (id, openid, nick, type, points, balance) => ({
-    _id: id, _openid: openid, nickname: nick, phone: '', avatar: '', userType: type,
-    points, balance, status: 0, realNameVerified: false, enterpriseVerified: type === 'employer',
-    createdAt: now - day * 3, lastLoginAt: now
-  })
-  coll('users').push(
-    u('u1', 'emp_demo', '沈阳张工', 'employer', 120, 50),
-    u('u2', 'w_demo1', '焊工老李', 'worker', 8, 0),
-    u('u3', 'w_demo2', '管工小王', 'worker', 15, 0)
-  )
-
-  const j = (id, title, salary, area, status, top, created) => ({
-    _id: id, ownerOpenid: 'emp_demo', employerName: '沈阳张工', employerVerified: true,
-    title, categoryId: title === '焊工' ? 'hanjie' : 'guandao', salary, salaryUnit: 1,
-    workArea: area, duration: '工期到年底', certificateReq: '双证', ageLimit: '55 岁以下',
-    techReq: '能包口', accommodation: '管吃住', payType: 1, contactName: '张',
-    contactPhoneEnc: '', isTop: top, isUrgent: status === 0, status,
-    viewCount: 12, applyCount: 1, createdAt: created, updatedAt: created,
-    expireAt: created + day * 7, rejectReason: ''
-  })
-  coll('jobs').push(
-    j('j1', '管工', 550, '新疆乌鲁木齐', 1, true, now - day * 2),
-    j('j2', '焊工', 600, '安徽工地', 0, false, now - 3600000),
-    j('j3', '普工', 260, '沈阳苏家屯', 1, false, now - day)
-  )
-
-  coll('blacklist').push({
-    _id: 'b1', bossPhoneHash: 'h1', bossPhoneMasked: '139****1111', bossName: '刘某',
-    reporterOpenid: 'w_demo1', reporterPhone: '', reasonType: 1,
-    reasonDetail: '干完活三个月不给工资，电话不接微信拉黑', evidence: [],
-    status: 0, createdAt: now - 3600000, reviewedAt: 0, reviewerId: ''
-  })
-
-  coll('reports').push({
-    _id: 'r1', reporterOpenid: 'w_demo2', jobId: 'j3', bossPhone: '13900002222',
-    reportType: 1, reason: '日薪和描述不一致，到现场压价', evidence: [], status: 0, createdAt: now - 7200000
-  })
-
-  coll('wallet').push(
-    { _id: 'w1', openid: 'emp_demo', type: 3, amount: 50, businessType: '充值', businessId: 'o1', remark: '微信支付充值', createdAt: now - day },
-    { _id: 'w2', openid: 'emp_demo', type: 2, amount: -30, businessType: '置顶', businessId: 'j1', remark: '管工', createdAt: now - day * 2 }
-  )
-
-  coll('orders').push({ _id: 'o1', outTradeNo: 'GHQ1', openid: 'emp_demo', amount: 50, fen: 5000, status: 'paid', createdAt: now - day })
-
-  coll('banners').push({
-    _id: 'bn1', imageUrl: 'https://img.yzcdn.cn/vant/cat.jpeg', link: '', title: '春季招工',
-    sort: 1, enabled: true, createdAt: now - day * 5
-  })
+  require('./seed-demo.js')(coll, require('../lib'))
 }
 
 module.exports = {

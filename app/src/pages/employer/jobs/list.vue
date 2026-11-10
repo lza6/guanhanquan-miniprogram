@@ -136,7 +136,7 @@ export default {
       try {
         const res = await api.getEmployerJobs({
           page: this.currentPage,
-          size: this.pageSize,
+          pageSize: this.pageSize,
           status: this.currentStatus
         })
         
@@ -199,7 +199,7 @@ export default {
     // 发布职位
     publishJob() {
       uni.navigateTo({
-        url: '/pages/employer/jobs/create'
+        url: '/pages/employer/jobPost'
       })
     },
     

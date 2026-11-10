@@ -202,97 +202,23 @@ export default {
     this.loadWorkerList()
   },
   methods: {
-    loadWorkerList() {
-      // 显示加载中
-      uni.showLoading({
-        title: '加载中...'
-      })
-      
-      // 尝试从API获取数据
-      API.getWorkersByCategory(this.categoryId, {
-        page: 1,
-        limit: 10,
-        search: this.keyword || undefined
-      }).then(result => {
-        // 关闭加载提示
-        uni.hideLoading()
-        
-        // 如果API返回了数据
-        if (result && result.list && result.list.length > 0) {
-          this.workerList = result.list
-        } else {
-          // 如果API没有返回数据，显示示例数据
-          this.showExampleData()
-        }
-      }).catch(error => {
-        console.error('获取零工列表失败', error)
-        uni.hideLoading()
-        uni.showToast({
-          title: '获取列表失败，显示示例数据',
-          icon: 'none'
+    async loadWorkerList() {
+      this.loading = true
+      try {
+        const res = await API.getWorkersByCategory(this.categoryId, {
+          page: 1,
+          pageSize: 20,
+          keyword: this.keyword || undefined
         })
-        // 在API请求失败时显示示例数据
-        this.showExampleData()
-      })
+        this.workerList = (res.data && res.data.records) || []
+      } catch (e) {
+        this.workerList = []
+      } finally {
+        uni.hideLoading()
+        this.loading = false
+      }
     },
-    
-    // 显示示例数据
-    showExampleData() {
-      this.workerList = [
-        {
-          id: 1,
-          name: '程*',
-          gender: '女',
-          age: 49,
-          education: '学历未知',
-          workArea: '',
-          jobType: '家政/保洁',
-          updateTime: '1天前',
-          online: true,
-          certified: true,
-          phone: '13812345678'
-        },
-        {
-          id: 2,
-          name: '张*章',
-          gender: '男',
-          age: 38,
-          education: '学历未知',
-          workArea: '',
-          jobType: '家政/保洁',
-          updateTime: '1天前',
-          online: false,
-          certified: false,
-          phone: '13987654321'
-        },
-        {
-          id: 3,
-          name: '郑*芳',
-          gender: '女',
-          age: 49,
-          education: '学历未知',
-          workArea: '福建省 厦门市 湖里区',
-          jobType: '家政/保洁',
-          updateTime: '1天前',
-          online: true,
-          certified: true,
-          phone: '13876543210'
-        },
-        {
-          id: 4,
-          name: '李*燕',
-          gender: '女',
-          age: 28,
-          education: '学历未知',
-          workArea: '福建省 厦门市 不限',
-          jobType: '家政/保洁',
-          updateTime: '1天前',
-          online: true,
-          certified: true,
-          phone: '13765432109'
-        }
-      ]
-    },
+
     search() {
       // 搜索处理
       this.loadWorkerList()

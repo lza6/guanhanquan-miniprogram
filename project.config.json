@@ -39,11 +39,14 @@
     "disableUseStrict": false,
     "minifyWXML": true,
     "showES6CompileOption": false,
-    "useCompilerPlugins": false
+    "useCompilerPlugins": false,
+    "condition": true,
+    "compileWorklet": false,
+    "localPlugins": false
   },
   "compileType": "miniprogram",
   "libVersion": "3.6.0",
-  "appid": "touristappid",
+  "appid": "wx382e1c4118294981",
   "projectname": "管焊圈",
   "cloudfunctionRoot": "cloudfunctions/",
   "miniprogramRoot": "app/dist/build/mp-weixin/",
@@ -51,5 +54,6 @@
   "editorSetting": {
     "tabIndent": "insertSpaces",
     "tabSize": 2
-  }
+  },
+  "simulatorPluginLibVersion": {}
 }

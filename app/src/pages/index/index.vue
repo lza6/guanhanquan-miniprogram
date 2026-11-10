@@ -3,7 +3,7 @@
     <!-- 自定义导航栏 -->
     <cu-custom bgColor="bg-gradient-green" :isBack="false">
       <block slot="content">
-        <text class="header-title">厦门零工市场</text>
+        <text class="header-title">管焊圈</text>
       </block>
     </cu-custom>
     
@@ -202,18 +202,18 @@ export default {
         let response
         switch (tab) {
           case 'hot':
-            response = await API.getLatestJobs({ page, size: this.pageSize })
+            response = await API.getRecommendedJobs({ page, pageSize: this.pageSize })
             break
           case 'nearest':
             response = await API.getNearbyJobs({ 
               page, 
-              size: this.pageSize,
+              pageSize: this.pageSize,
               latitude: this.location && this.location.latitude,
               longitude: this.location && this.location.longitude
             })
             break
           case 'latest':
-            response = await API.getLatestJobs({ page, size: this.pageSize })
+            response = await API.getRecommendedJobs({ page, pageSize: this.pageSize })
             break
         }
         
@@ -395,7 +395,7 @@ export default {
     // 跳转到搜索页
     goToSearch() {
       uni.navigateTo({
-        url: '/pages/search/search'
+        url: '/pages/jobSearch/jobSearch'
       })
     },
 

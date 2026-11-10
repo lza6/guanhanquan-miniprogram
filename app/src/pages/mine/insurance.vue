@@ -1,196 +1,111 @@
 <template>
-  <view class="insurance-container">
-    <!-- 自定义导航栏 -->
+  <view class="page">
     <cu-custom bgColor="bg-white" isBack>
       <block slot="content">保险</block>
     </cu-custom>
-    
-    <!-- 保险公司电话 -->
-    <view class="insurance-section">
-      <view class="section-title">保险公司电话</view>
-      <view class="phone-box" @click="callInsurance">
-        <text>95518</text>
-        <image src="/static/img/icons/call.png" mode="aspectFit" class="call-icon"></image>
-      </view>
+
+    <view class="tabs">
+      <view :class="['tab', tab === 'buy' && 'active']" @tap="tab = 'buy'">可购买</view>
+      <view :class="['tab', tab === 'mine' && 'active']" @tap="switchMine">我的保单</view>
     </view>
-    
-    <!-- 上传凭证 -->
-    <view class="insurance-section">
-      <view class="section-title">上传凭证</view>
-      <view class="upload-box" @click="chooseImage">
-        <image v-if="imageUrl" :src="imageUrl" mode="aspectFill" class="uploaded-image"></image>
-        <view v-else class="upload-placeholder">
-          <image src="/static/img/icons/camera.png" mode="aspectFit" class="camera-icon"></image>
+
+    <view v-if="tab === 'buy'">
+      <view class="card" v-for="item in products" :key="item.id">
+        <view class="item-head">
+          <text class="name">{{ item.name }}</text>
+          <text class="price">¥{{ item.price }}</text>
         </view>
+        <view class="coverage">{{ item.coverage }}</view>
+        <view class="intro">{{ item.intro }}</view>
+        <button class="buy" @tap="buy(item)">购买</button>
       </view>
+      <view v-if="!products.length && !loading" class="empty">暂无可购买的保险</view>
     </view>
-    
-    <!-- 备注 -->
-    <view class="insurance-section">
-      <view class="section-title">备注</view>
-      <textarea class="remark-textarea" placeholder="请输入备注..." v-model="remark"></textarea>
+
+    <view v-else>
+      <view class="card" v-for="p in policies" :key="p.id">
+        <view class="item-head">
+          <text class="name">{{ p.name }}</text>
+          <text class="price">¥{{ p.price }}</text>
+        </view>
+        <view class="intro">购买时间：{{ formatDate(p.createdAt) }}</view>
+      </view>
+      <view v-if="!policies.length" class="empty">还没有购买记录</view>
     </view>
-    
-    <!-- 提交按钮 -->
-    <button class="submit-btn" @click="submitInsurance">提交信息</button>
   </view>
 </template>
 
 <script>
+import api from '@/api/index.js'
+
 export default {
   data() {
     return {
-      imageUrl: '',
-      remark: ''
+      tab: 'buy',
+      products: [],
+      policies: [],
+      loading: false
     }
   },
+  onLoad() {
+    this.loadProducts()
+  },
   methods: {
-    callInsurance() {
-      uni.makePhoneCall({
-        phoneNumber: '95518',
-        success: () => {
-          console.log('拨打电话成功')
-        },
-        fail: (err) => {
-          console.error('拨打电话失败', err)
-          uni.showToast({
-            title: '拨打电话失败',
-            icon: 'none'
-          })
-        }
-      })
+    formatDate(ts) {
+      const d = new Date(ts)
+      return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate()
     },
-    chooseImage() {
-      uni.chooseImage({
-        count: 1,
-        sizeType: ['compressed'],
-        sourceType: ['album', 'camera'],
-        success: (res) => {
-          this.imageUrl = res.tempFilePaths[0]
-        },
-        fail: (err) => {
-          console.error('选择图片失败', err)
-        }
-      })
-    },
-    submitInsurance() {
-      if (!this.imageUrl) {
-        uni.showToast({
-          title: '请上传保险凭证',
-          icon: 'none'
-        })
-        return
+    async loadProducts() {
+      this.loading = true
+      try {
+        const res = await api.getInsuranceList()
+        this.products = res.data || []
+      } catch (e) {
+        this.products = []
+      } finally {
+        this.loading = false
       }
-      
-      // 模拟上传
-      uni.showLoading({
-        title: '提交中...'
-      })
-      
-      setTimeout(() => {
-        uni.hideLoading()
-        
-        uni.showModal({
-          title: '提交成功',
-          content: '您的保险信息已提交，我们将尽快审核',
-          showCancel: false,
-          success: () => {
-            uni.navigateBack()
+    },
+    async switchMine() {
+      this.tab = 'mine'
+      try {
+        const res = await api.getUserInsurances()
+        this.policies = res.data || []
+      } catch (e) {
+        this.policies = []
+      }
+    },
+    async buy(item) {
+      uni.showModal({
+        title: '确认购买',
+        content: `将扣除余额 ¥${item.price}`,
+        success: async (r) => {
+          if (!r.confirm) return
+          try {
+            await api.buyInsurance(item.id, {})
+            uni.showToast({ title: '购买成功', icon: 'success' })
+            this.switchMine()
+          } catch (e) {
+            // 余额不足等提示由请求层给出
           }
-        })
-      }, 1500)
+        }
+      })
     }
   }
 }
 </script>
 
-<style lang="scss">
-.insurance-container {
-  min-height: 100vh;
-  background-color: #F5F5F5;
-  padding-bottom: 50rpx;
-  
-  .insurance-section {
-    background-color: #FFFFFF;
-    margin: 20rpx;
-    border-radius: 16rpx;
-    padding: 30rpx;
-    box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.05);
-    
-    .section-title {
-      font-size: 30rpx;
-      color: #333;
-      font-weight: bold;
-      margin-bottom: 20rpx;
-    }
-    
-    .phone-box {
-      background-color: #F5F5F5;
-      padding: 20rpx 30rpx;
-      border-radius: 12rpx;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      
-      text {
-        font-size: 30rpx;
-        color: #333;
-      }
-      
-      .call-icon {
-        width: 40rpx;
-        height: 40rpx;
-      }
-    }
-    
-    .upload-box {
-      width: 100%;
-      height: 300rpx;
-      background-color: #F5F5F5;
-      border-radius: 12rpx;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      
-      .upload-placeholder {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        
-        .camera-icon {
-          width: 80rpx;
-          height: 80rpx;
-          margin-bottom: 20rpx;
-        }
-      }
-      
-      .uploaded-image {
-        width: 100%;
-        height: 100%;
-      }
-    }
-    
-    .remark-textarea {
-      width: 100%;
-      height: 200rpx;
-      background-color: #F5F5F5;
-      border-radius: 12rpx;
-      padding: 20rpx;
-      font-size: 28rpx;
-      color: #333;
-    }
-  }
-  
-  .submit-btn {
-    width: 90%;
-    height: 90rpx;
-    line-height: 90rpx;
-    background-color: #4CAF50;
-    color: #FFFFFF;
-    font-size: 32rpx;
-    border-radius: 45rpx;
-    margin-top: 40rpx;
-  }
-}
-</style> 
+<style lang="scss" scoped>
+.page { min-height: 100vh; background: #f5f6f8; padding-bottom: 40rpx; }
+.tabs { display: flex; background: #fff; }
+.tab { flex: 1; text-align: center; padding: 26rpx 0; font-size: 28rpx; color: #666; }
+.tab.active { color: #1976d2; font-weight: 600; border-bottom: 4rpx solid #1976d2; }
+.card { background: #fff; margin: 20rpx; border-radius: 16rpx; padding: 28rpx; }
+.item-head { display: flex; justify-content: space-between; align-items: center; }
+.name { font-size: 30rpx; font-weight: 600; }
+.price { color: #e54d42; font-size: 32rpx; font-weight: 700; }
+.coverage { margin-top: 12rpx; font-size: 26rpx; color: #1976d2; }
+.intro { margin-top: 8rpx; font-size: 24rpx; color: #999; }
+.buy { margin-top: 20rpx; background: #1976d2; color: #fff; border-radius: 40rpx; height: 72rpx; line-height: 72rpx; font-size: 28rpx; }
+.empty { text-align: center; color: #999; padding: 120rpx 0; font-size: 26rpx; }
+</style>

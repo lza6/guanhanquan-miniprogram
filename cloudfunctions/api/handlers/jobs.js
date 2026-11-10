@@ -33,7 +33,9 @@ function brief(job) {
     viewCount: job.viewCount || 0,
     applyCount: job.applyCount || 0,
     createdAt: job.createdAt,
-    employerVerified: !!job.employerVerified
+    employerVerified: !!job.employerVerified,
+    latitude: job.latitude,
+    longitude: job.longitude
   }
 }
 
@@ -86,13 +88,17 @@ exports.list = async (ctx) => {
     w.salary = L.cmd().lte(Number(d.maxSalary))
   }
   if (d.isUrgent) w.isUrgent = true
+  if (d.createdWithin) {
+    const hours = Number(d.createdWithin)
+    if (hours > 0) w.createdAt = L.cmd().gte(Date.now() - hours * 3600 * 1000)
+  }
 
   const coll = L.db().collection('jobs')
   const total = (await coll.where(w).count()).total
-  const res = await coll.where(w)
-    .orderBy('isTop', 'desc')
-    .orderBy('createdAt', 'desc')
-    .skip(skip).limit(pageSize).get()
+  let query = coll.where(w).orderBy('isTop', 'desc')
+  if (d.sort === 'salary') query = query.orderBy('salary', 'desc')
+  else if (d.sort === 'views') query = query.orderBy('viewCount', 'desc')
+  const res = await query.orderBy('createdAt', 'desc').skip(skip).limit(pageSize).get()
   return L.ok(L.listResult(res.data.map(brief), total, page, pageSize))
 }
 
@@ -152,8 +158,26 @@ exports.recommended = async (ctx) => exports.list(Object.assign({}, ctx, {
 }))
 
 exports.nearby = async (ctx) => {
-  // 云数据库不支持地理围栏查询，按城市过滤 + 时间倒序，前端再按距离排序
-  return exports.list(Object.assign({}, ctx, { data: Object.assign({ pageSize: 10 }, ctx.data) }))
+  const d = ctx.data || {}
+  const lat = Number(d.latitude)
+  const lng = Number(d.longitude)
+  if (!lat || !lng) return exports.list(ctx)
+
+  const { page, pageSize } = L.pager(d)
+  const radius = Number(d.radiusKm || 300)
+
+  const res = await L.db().collection('jobs').where({ status: 1 }).limit(200).get()
+  const withDistance = res.data
+    .filter((j) => typeof j.latitude === 'number' && typeof j.longitude === 'number')
+    .map((j) => Object.assign({}, j, {
+      distance: L.distanceKm(lat, lng, j.latitude, j.longitude)
+    }))
+    .filter((j) => j.distance <= radius)
+    .sort((a, b) => a.distance - b.distance)
+
+  const total = withDistance.length
+  const slice = withDistance.slice((page - 1) * pageSize, page * pageSize)
+  return L.ok(L.listResult(slice.map((j) => Object.assign(brief(j), { distance: j.distance })), total, page, pageSize))
 }
 
 exports.latest = async (ctx) => {

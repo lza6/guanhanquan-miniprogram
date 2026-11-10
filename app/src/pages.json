@@ -3,7 +3,7 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "厦门零工市场",
+        "navigationBarTitleText": "管焊圈",
         "enablePullDownRefresh": true,
         "navigationStyle": "custom"
       }
@@ -68,13 +68,6 @@
       "path": "pages/training/training",
       "style": {
         "navigationBarTitleText": "在线培训",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/employer/postJob/index",
-      "style": {
-        "navigationBarTitleText": "发布岗位",
         "navigationStyle": "custom"
       }
     },
@@ -211,7 +204,7 @@
   ],
   "globalStyle": {
     "navigationBarTextStyle": "white",
-    "navigationBarTitleText": "厦门零工市场",
+    "navigationBarTitleText": "管焊圈",
     "navigationBarBackgroundColor": "#4CAF50",
     "backgroundColor": "#F8F8F8",
     "navigationStyle": "custom"

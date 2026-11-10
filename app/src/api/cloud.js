@@ -17,11 +17,9 @@ export function initCloud() {
  * 调用云函数。返回完整响应体 { success, data, message }，与页面层既有写法保持一致。
  */
 function devRequest(path, method, data) {
-  let openid = uni.getStorageSync('ghq_dev_openid')
-  if (!openid) {
-    openid = 'dev-' + Math.random().toString(36).slice(2, 10)
-    uni.setStorageSync('ghq_dev_openid', openid)
-  }
+  // 本地联调固定身份，便于命中种子数据
+  const openid = uni.getStorageSync('ghq_dev_openid') || 'dev-openid'
+  if (!uni.getStorageSync('ghq_dev_openid')) uni.setStorageSync('ghq_dev_openid', openid)
   return new Promise((resolve, reject) => {
     uni.request({
       url: DEV_API_BASE + path,

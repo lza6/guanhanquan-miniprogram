@@ -30,7 +30,7 @@ export default {
   props: {
     title: {
       type: String,
-      default: '厦门零工市场'
+      default: '管焊圈'
     },
     showBack: {
       type: Boolean,
