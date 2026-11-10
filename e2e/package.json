@@ -1,0 +1,9 @@
+{
+  "name": "ghq-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "管焊圈小程序自动化验收",
+  "dependencies": {
+    "miniprogram-automator": "^0.12.1"
+  }
+}
