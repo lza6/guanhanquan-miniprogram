@@ -91,3 +91,21 @@ exports.updateEmployerProfile = async (ctx) => {
   })
   return L.ok(enterprise)
 }
+
+/** 实名认证提交：进入待审核，管理端核验通过后置真 */
+exports.submitRealName = async (ctx) => {
+  const name = String((ctx.data && ctx.data.realName) || '').trim()
+  const idCard = String((ctx.data && ctx.data.idCard) || '').trim()
+  if (name.length < 2) return L.fail('请填写真实姓名')
+  if (!/^\d{17}[\dXx]$/.test(idCard)) return L.fail('身份证号格式不正确')
+  await L.db().collection('users').doc(ctx.user._id).update({
+    data: {
+      realName: name,
+      idCardEnc: L.encryptText(idCard),
+      idCardMasked: idCard.slice(0, 4) + '**********' + idCard.slice(-4),
+      realNameStatus: 0,
+      updatedAt: Date.now()
+    }
+  })
+  return L.ok({ status: 0 })
+}

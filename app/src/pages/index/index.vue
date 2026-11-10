@@ -293,22 +293,14 @@ export default {
         if (response && response.code === 0 && response && response.data) {
           this.banners = response.data
         } else {
-          this.useDefaultBanners()
+          this.banners = []
         }
       } catch (error) {
         console.error('获取轮播图失败', error)
-        this.useDefaultBanners()
+        this.banners = []
       }
     },
 
-    // 使用默认轮播图
-    useDefaultBanners() {
-      this.banners = [
-        { id: 1, imageUrl: '/static/img/default/1 (1).png', url: '' },
-        { id: 2, imageUrl: '/static/img/default/1 (2).png', url: '' },
-        { id: 3, imageUrl: '/static/img/default/1 (3).png', url: '' }
-      ]
-    },
     
     // 获取分类数据
     async fetchCategories() {
@@ -317,29 +309,14 @@ export default {
         if (response && response.code === 0 && response && response.data) {
           this.categories = response.data
         } else {
-          this.useDefaultCategories()
+          this.categories = []
         }
       } catch (error) {
         console.error('获取分类失败', error)
-        this.useDefaultCategories()
+        this.categories = []
       }
     },
 
-    // 使用默认分类
-    useDefaultCategories() {
-      this.categories = [
-        { id: 1, name: '餐饮服务', description: '包括厨师、服务员、配送员等餐饮相关工作', icon: '/static/img/category/1.png' },
-        { id: 2, name: '保洁服务', description: '包括保洁、照顾老人、育儿等家庭服务工作', icon: '/static/img/category/2.png' },
-        { id: 3, name: '搬运装卸', description: '包括搬运、装卸、建筑等体力工作', icon: '/static/img/category/3.png' },
-        { id: 4, name: '专业技工', description: '包括维修、安装等技术性工作', icon: '/static/img/category/4.png' },
-        { id: 5, name: '临时工', description: '包括促销、导购等销售类工作', icon: '/static/img/category/5.png' },
-        { id: 6, name: '更多服务', description: '其他不方便分类的工作', icon: '/static/img/category/6.png' },
-        { id: 7, name: '医疗陪诊', description: '医疗相关', icon: '/static/img/category/7.png' },
-        { id: 8, name: '制造业', description: '制造相关', icon: '/static/img/category/8.png' },
-        { id: 9, name: '家政服务', description: '家政相关', icon: '/static/img/category/9.png' },
-        { id: 10, name: '物流配送', description: '物流相关', icon: '/static/img/category/10.png' }
-      ]
-    },
 
     // 切换标签
     async switchTab(tab) {

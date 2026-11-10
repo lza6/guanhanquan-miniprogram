@@ -102,7 +102,7 @@
             <view class="badge" v-if="userInfo && userInfo.hasNewCourse">NEW</view>
             <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
           </view>
-          <view class="menu-item" @click="checkLogin('/pages/mine/certificates')">
+          <view class="menu-item" @click="checkLogin('/pages/mine/certification')">
             <view class="icon">
               <uni-icons type="vip" size="22" color="#9C27B0"></uni-icons>
             </view>
@@ -152,6 +152,7 @@ export default {
   },
   data() {
     return {
+      stats: { applicationCount: 0, favoriteCount: 0, certificationCount: 0 },
       isLoggedIn: false
     }
   },
@@ -182,24 +183,28 @@ export default {
     },
     // 计算统计数据
     statsInfo() {
-      if (!this.isLoggedIn || !this.userInfo) {
-        return {
-          applicationCount: 0,
-          favoriteCount: 0,
-          certificationCount: 0
-        }
-      }
-      return {
-        applicationCount: this.userInfo.applicationCount || 0,
-        favoriteCount: this.userInfo.favoriteCount || 0,
-        certificationCount: this.userInfo.certificationCount || 0
-      }
+      return this.stats
     }
   },
   onShow() {
     this.checkLoginStatus()
+    this.loadStats()
   },
   methods: {
+    async loadStats() {
+      if (!this.isLoggedIn) return
+      try {
+        const [apps, favs] = await Promise.all([
+          api.getWorkerApplications({ page: 1, pageSize: 1 }),
+          api.getFavorites({ page: 1, pageSize: 1 })
+        ])
+        this.stats = {
+          applicationCount: (apps.data && apps.data.total) || 0,
+          favoriteCount: (favs.data && favs.data.total) || 0,
+          certificationCount: this.userInfo && this.userInfo.realNameVerified ? 1 : 0
+        }
+      } catch (e) {}
+    },
     ...mapMutations(['setUserInfo', 'setUserType']),
     // 检查登录状态
     checkLoginStatus() {

@@ -82,36 +82,7 @@
       
       <view class="menu-group">
         <view class="menu-title">常用工具</view>
-        <view class="menu-list">
-          <view class="menu-item" @click="checkLogin('/pages/employer/resume/favorites')">
-            <view class="icon">
-              <uni-icons type="star" size="22" color="#FF5722"></uni-icons>
-            </view>
-            <view class="text">收藏的简历</view>
-            <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
-          </view>
-          <view class="menu-item" @click="checkLogin('/pages/employer/insurance/list')">
-            <view class="icon">
-              <uni-icons type="safety" size="22" color="#9C27B0"></uni-icons>
-            </view>
-            <view class="text">保险购买记录</view>
-            <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
-          </view>
-          <view class="menu-item" @click="checkLogin('/pages/employer/dispute/list')">
-            <view class="icon">
-              <uni-icons type="help" size="22" color="#E53935"></uni-icons>
-            </view>
-            <view class="text">纠纷单</view>
-            <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
-          </view>
-          <view class="menu-item" @click="checkLogin('/pages/employer/recommend/records')">
-            <view class="icon">
-              <uni-icons type="paperplane" size="22" color="#4CAF50"></uni-icons>
-            </view>
-            <view class="text">推单记录</view>
-            <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
-          </view>
-        </view>
+        <view class="menu-list"></view>
       </view>
       
       <view class="menu-group">

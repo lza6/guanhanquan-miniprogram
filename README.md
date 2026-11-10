@@ -7,7 +7,7 @@
 ```
 app/                小程序端（uni-app 3 + Vue 3 + Vite）
   src/api/          接口层：云函数调用 / 本地 HTTP 双通道
-  src/pages/        27 个页面
+  src/pages/        33 个页面
   src/store/        Vuex 4
 cloudfunctions/
   api/              单入口云函数，内部 60 条路由
@@ -62,7 +62,7 @@ cd cloudfunctions/api && node test/run.js
 | 运营后台 | 完成，浏览器实测通过 |
 | 详情页 / 黑老板查询 / 举报 / 微信登录 | 完成 |
 | 首页筛选维度、发布页行业字段 | 进行中 |
-| 12 个页面的假数据替换 | 待做 |
+| 页面假数据替换 | 完成，接口失败即空态 |
 
 详见 [docs/验收矩阵.md](docs/验收矩阵.md)。
 

@@ -179,6 +179,55 @@
         "navigationStyle": "custom",
         "navigationBarTitleText": "举报信息"
       }
+    },
+    {
+      "path": "pages/mine/favorites",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "我的收藏"
+      }
+    },
+    {
+      "path": "pages/mine/settings",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "设置"
+      }
+    },
+    {
+      "path": "pages/mine/certification",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "实名认证"
+      }
+    },
+    {
+      "path": "pages/message/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "消息通知"
+      }
+    },
+    {
+      "path": "pages/common/privacy-policy",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "隐私政策"
+      }
+    },
+    {
+      "path": "pages/common/user-agreement",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "用户协议"
+      }
+    },
+    {
+      "path": "pages/employer/applicants/list",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "报名管理"
+      }
     }
   ],
   "subPackages": [

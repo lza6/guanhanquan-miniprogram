@@ -11,6 +11,7 @@ export default {
 	register: (data) => post('/auth/register', data),
 	getUserProfile: () => get('/users/profile'),
 	updateUserProfile: (data) => put('/users/profile', data),
+	submitRealName: (data) => post('/users/real-name', data),
 	sendSmsCode: (phone) => post('/auth/sms-code/send', { phone }),
 	verifySmsCode: (phone, code) => post('/auth/sms-code/verify', { phone, code }),
 	bindPhone: (code) => post('/auth/bind-phone', { code }),

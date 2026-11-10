@@ -313,7 +313,7 @@ export default {
                     }
                 } else {
                     if (!loadMore) {
-                        this.showExampleData();
+                        this.resumeList = [];
                     }
                     this.loadingStatus = 'nomore';
                     
@@ -329,7 +329,7 @@ export default {
                     icon: 'none'
                 });
                 if (!loadMore) {
-                    this.showExampleData();
+                    this.resumeList = [];
                 }
                 this.loadingStatus = 'nomore';
             }).finally(() => {
@@ -375,153 +375,9 @@ export default {
             } catch (e) {
                 return '未知时间';
             }
-        },
-        
-        // 显示示例数据
-        showExampleData() {
-            this.resumeList = [
-                {
-                    id: '1',
-                    name: '张明',
-                    avatar: '/static/img/default-avatar.png',
-                    age: 28,
-                    gender: '男',
-                    education: '烹饪学校毕业',
-                    jobType: '厨师、中餐、西餐',
-                    workYears: 5,
-                    location: '厦门市',
-                    lastActive: '昨天',
-                    description: '5年餐饮行业工作经验，擅长中西餐制作',
-                    rating: 4.8,
-                    certificationCount: 3,
-                    jobsCompleted: 20,
-                    hasInsurance: true,
-                    hourlyRate: 50,
-                    availability: '周一至周五 9:00-18:00'
-                },
-                {
-                    id: '2',
-                    name: '李红',
-                    avatar: '/static/img/default-avatar.png',
-                    age: 35,
-                    gender: '女',
-                    education: '高中',
-                    jobType: '保洁、家政',
-                    workYears: 3,
-                    location: '厦门市',
-                    lastActive: '3小时前',
-                    description: '3年家政服务经验，擅长家居清洁和整理',
-                    rating: 4.5,
-                    certificationCount: 2,
-                    jobsCompleted: 15,
-                    hasInsurance: true,
-                    hourlyRate: 35,
-                    availability: '全天'
-                },
-                {
-                    id: '3',
-                    name: '王强',
-                    avatar: '/static/img/default-avatar.png',
-                    age: 32,
-                    gender: '男',
-                    education: '初中',
-                    jobType: '搬运、装卸',
-                    workYears: 8,
-                    location: '厦门市',
-                    lastActive: '5天前',
-                    description: '8年物流行业经验，体力好',
-                    rating: 4.7,
-                    certificationCount: 1,
-                    jobsCompleted: 25,
-                    hasInsurance: true,
-                    hourlyRate: 45,
-                    availability: '全天'
-                }
-            ]
-        },
-        
-        search() {
-            console.log('搜索内容:', this.searchText);
-            // 清空筛选条件
-            this.filter = {};
-            // 加载搜索结果
-            this.loadResumeList(false);
-        },
-        
-        // 获取筛选条件的显示文本
-        getFilterLabel(type) {
-            if (!this.filter[type]) {
-                return type === 'age' ? '年龄' : '学历';
-            }
-            
-            const options = this.filterOptions[type];
-            const selected = options.find(option => option.value === this.filter[type]);
-            return selected ? selected.label : '';
-        },
-        
-        showFilterPopup(type) {
-            uni.showActionSheet({
-                itemList: this.filterOptions[type].map(item => item.label),
-                success: res => {
-                    const selectedOption = this.filterOptions[type][res.tapIndex];
-                    if (selectedOption.value === '') {
-                        // 如果选择"不限"，则删除该筛选条件
-                        delete this.filter[type];
-                    } else {
-                        // 否则更新筛选条件
-                        this.filter[type] = selectedOption.value;
-                    }
-                    // 应用筛选后刷新列表
-                    this.loadResumeList(false);
-                }
-            });
-        },
-        
-        selectCategory(category) {
-            // 如果点击的是当前选中的分类，则取消选择
-            if (this.filter.jobType === category.skills) {
-                delete this.filter.jobType;
-            } else {
-                this.filter.jobType = category.skills;
-            }
-            this.loadResumeList(false);
-        },
-        
-        goToDetail(resume) {
-            uni.navigateTo({
-                url: `/pages/employer/resume/detail?id=${resume.id}`
-            });
-        },
-        
-        recommendJob(worker) {
-            uni.showToast({
-                title: '推单记录',
-                icon: 'none'
-            });
-        },
-        
-        forwardJob(worker) {
-            uni.showToast({
-                title: '推单给他',
-                icon: 'none'
-            });
-        },
-        
-        evaluate(worker) {
-            uni.showToast({
-                title: '查看评价',
-                icon: 'none'
-            });
-        },
-        
-        showFilter() {
-            // 显示筛选面板
-            uni.showToast({
-                title: '筛选功能开发中',
-                icon: 'none'
-            })
         }
     },
+
     // 下拉刷新
     onPullDownRefresh() {
         this.loadResumeList(false);

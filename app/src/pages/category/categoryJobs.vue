@@ -232,11 +232,7 @@ export default {
                 }
             } catch (error) {
                 console.error('获取工作列表失败', error)
-                uni.showToast({
-                    title: '获取列表失败，显示示例数据',
-                    icon: 'none'
-                })
-                this.showExampleData()
+                this.jobList = []
             } finally {
                 uni.hideLoading()
                 this.isLoading = false
@@ -255,50 +251,6 @@ export default {
             return `${hours}:${minutes}\n${year}/${month}/${day}`
         },
         
-        // 显示示例数据
-        showExampleData() {
-            this.jobList = [
-                {
-                    id: 1,
-                    title: "保洁",
-                    icon: "/static/img/category/housekeeping.png",
-                    salary: "4500元/月",
-                    gender: "男女不限",
-                    jobType: this.categoryName,
-                    contact: "18959200015, 香林北二路2号(4#厂房)...",
-                    startTime: "00:00\n2025/05/07",
-                    endTime: "00:00\n2025/05/14",
-                    urgent: true,
-                    hotJob: true
-                },
-                {
-                    id: 2,
-                    title: "保洁",
-                    icon: "/static/img/category/housekeeping.png",
-                    salary: "3000元/月",
-                    gender: "男女不限",
-                    jobType: this.categoryName,
-                    contact: "厦门市思明区仙岳路189号金帝花园A栋",
-                    startTime: "00:00\n2025/04/30",
-                    endTime: "00:00\n2025/05/01",
-                    urgent: false,
-                    hotJob: true
-                },
-                {
-                    id: 3,
-                    title: "工厂保洁员",
-                    icon: "/static/img/category/housekeeping.png",
-                    salary: "3000元/月",
-                    gender: "男女不限",
-                    jobType: this.categoryName,
-                    contact: "集贤路1999号",
-                    startTime: "00:00\n2025/04/30",
-                    endTime: "00:00\n2025/05/30",
-                    urgent: true,
-                    hotJob: false
-                }
-            ]
-        },
 
         // 搜索处理
         search() {

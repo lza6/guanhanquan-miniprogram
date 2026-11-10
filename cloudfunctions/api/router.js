@@ -19,6 +19,7 @@ const ROUTES = [
   ['POST', '/auth/bind-phone', handlers.auth.bindPhone, 'user'],
   ['GET', '/users/profile', handlers.auth.profile, 'user'],
   ['PUT', '/users/profile', handlers.auth.updateProfile, 'user'],
+  ['POST', '/users/real-name', handlers.auth.submitRealName, 'user'],
 
   // 招工方资料
   ['GET', '/employers/profile', handlers.auth.employerProfile, 'user'],
