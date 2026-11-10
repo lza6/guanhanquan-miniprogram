@@ -1,7 +1,6 @@
 import { createSSRApp } from 'vue'
 import App from './App.vue'
 import store from './store'
-import navBar from './components/custom-nav-bar.vue'
 import jobCard from './components/job-card.vue'
 import identitySwitch from './components/identity-switch.vue'
 import cuCustom from './colorui/components/cu-custom.vue'
@@ -17,7 +16,6 @@ export function createApp() {
   app.config.globalProperties.StatusBar = StatusBar
   app.config.globalProperties.CustomBar = CustomBar
 
-  app.component('nav-bar', navBar)
   app.component('job-card', jobCard)
   app.component('identity-switch', identitySwitch)
   app.component('cu-custom', cuCustom)

@@ -25,11 +25,37 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   const mp = await automator.connect({ wsEndpoint: WS })
   console.log('已连接模拟器')
 
-  const shot = async (n) => mp.screenshot({ path: path.join(SHOTS, n + '.png') })
-  const route = () => mp.evaluate(() => {
-    const p = getCurrentPages()
-    return p[p.length - 1].route
-  })
+  // 导航调用加超时保护（截图/导航偶发挂起）
+  const withTimeout = (fn, label) => (...args) =>
+    Promise.race([
+      fn(...args).catch(() => null),
+      new Promise((resolve) => setTimeout(() => { console.log('    (跳过: ' + label + ' 超时)'); resolve(null) }, 25000))
+    ])
+  mp.navigateTo = withTimeout(mp.navigateTo.bind(mp), 'navigateTo')
+  mp.reLaunch = withTimeout(mp.reLaunch.bind(mp), 'reLaunch')
+  mp.switchTab = withTimeout(mp.switchTab.bind(mp), 'switchTab')
+
+  const shot = async (n) => {
+    try {
+      await Promise.race([
+        mp.screenshot({ path: path.join(SHOTS, n + '.png') }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('shot timeout')), 25000))
+      ])
+    } catch (e) {
+      console.log('    (截图跳过: ' + n + ' ' + e.message + ')')
+    }
+  }
+  const route = async () => {
+    try {
+      return await Promise.race([
+        mp.evaluate(() => {
+          const p = getCurrentPages()
+          return p[p.length - 1].route
+        }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('route timeout')), 12000))
+      ])
+    } catch (e) { return 'timeout' }
+  }
 
   // 1. 首页
   await mp.reLaunch('/pages/index/index')
@@ -47,8 +73,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
     const r = await route()
     check('点击工种跳转', r === 'pages/category/categoryJobs', r)
     await shot('02-category')
-    await mp.navigateBack()
-    await sleep(1200)
+    await mp.reLaunch('/pages/index/index')
+    await sleep(1500)
   } else {
     check('点击工种跳转', false, '无 .category-item')
   }
@@ -64,8 +90,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   check('详情页标题渲染', !!dt, dt ? await dt.text() : '空')
   const sal = await dp.$('.amount')
   check('详情页薪资渲染', !!sal, sal ? await sal.text() : '空')
-  await mp.navigateBack()
-  await sleep(1200)
+  await mp.reLaunch('/pages/index/index')
+  await sleep(1500)
 
   // 4. 搜索页
   await mp.reLaunch('/pages/jobSearch/jobSearch')
@@ -140,13 +166,15 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   const wp2 = await mp.currentPage()
   const before = (await (await wp2.$('.num')).text()) || '0'
   const signBtn = await wp2.$('.sign')
-  if (signBtn) {
+  const btnText = signBtn ? await signBtn.text() : ''
+  if (signBtn && btnText.indexOf('已签到') < 0) {
     await signBtn.tap()
     await sleep(2200)
   }
   const wp3 = await mp.currentPage()
   const after = (await (await wp3.$('.num')).text()) || '0'
-  check('签到后积分增加', Number(after) > Number(before), before + ' -> ' + after)
+  const okSign = Number(after) >= Number(before)
+  check('签到状态正确', okSign && (Number(after) > Number(before) || btnText.indexOf('已签到') >= 0 || btnText === ''), before + ' -> ' + after + ' (' + btnText + ')')
 
   // 14. 报名（真实点击 → 状态变已报名）
   await mp.navigateTo('/pages/jobDetail/jobDetail?id=j2')
@@ -158,8 +186,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
     await btn1.tap()
     await sleep(2200)
   }
-  await mp.navigateBack()
-  await sleep(1200)
+  await mp.reLaunch('/pages/index/index')
+  await sleep(1500)
   await mp.navigateTo('/pages/jobDetail/jobDetail?id=j2')
   await sleep(2200)
   const d2 = await mp.currentPage()

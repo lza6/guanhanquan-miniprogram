@@ -18,10 +18,20 @@
 <script>
 	export default {
 		data() {
-			return {
-				StatusBar: this.StatusBar,
-				CustomBar: this.CustomBar
-			};
+			let statusBar = 20
+			let customBar = 64
+			try {
+				const sys = uni.getSystemInfoSync() || {}
+				statusBar = sys.statusBarHeight || 20
+				// #ifdef MP-WEIXIN
+				if (uni.getMenuButtonBoundingClientRect) {
+					const menu = uni.getMenuButtonBoundingClientRect()
+					if (menu && menu.bottom) customBar = menu.bottom + menu.top - statusBar
+				}
+				// #endif
+				if (!customBar || customBar <= statusBar) customBar = statusBar + 44
+			} catch (e) {}
+			return { StatusBar: statusBar, CustomBar: customBar }
 		},
 		name: 'cu-custom',
 		computed: {

@@ -1,0 +1,10 @@
+const path = require('path')
+const automator = require('miniprogram-automator')
+;(async () => {
+  const mp = await automator.connect({ wsEndpoint: 'ws://127.0.0.1:9420' })
+  await mp.navigateTo('/pages/message/index')
+  await new Promise(r => setTimeout(r, 3500))
+  await mp.screenshot({ path: path.join(__dirname, 'shots', 'nav-check.png') })
+  console.log('ok')
+  await mp.disconnect(); process.exit(0)
+})().catch(e => { console.error('ERR', e.message); process.exit(1) })

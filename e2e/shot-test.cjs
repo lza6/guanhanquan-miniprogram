@@ -1,0 +1,11 @@
+const path = require('path')
+const automator = require('miniprogram-automator')
+;(async () => {
+  const mp = await automator.connect({ wsEndpoint: 'ws://127.0.0.1:9420' })
+  await mp.reLaunch('/pages/index/index')
+  await new Promise(r => setTimeout(r, 3000))
+  const t0 = Date.now()
+  await mp.screenshot({ path: path.join(__dirname, 'shots', 'verify.png') })
+  console.log('截图成功，耗时', Date.now() - t0, 'ms')
+  await mp.disconnect(); process.exit(0)
+})().catch(e => { console.error('ERR', e.message); process.exit(1) })

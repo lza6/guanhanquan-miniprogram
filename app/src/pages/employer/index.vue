@@ -69,6 +69,20 @@
             <view class="text">已完成职位</view>
             <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
           </view>
+          <view class="menu-item" @click="checkLogin('/pages/employer/resume/index')">
+            <view class="icon">
+              <uni-icons type="contact" size="22" color="#9C27B0"></uni-icons>
+            </view>
+            <view class="text">工人简历库</view>
+            <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
+          </view>
+          <view class="menu-item" @click="checkLogin('/pages/category/categoryWorkers?id=&name=全部工种')">
+            <view class="icon">
+              <uni-icons type="search" size="22" color="#FF9800"></uni-icons>
+            </view>
+            <view class="text">按工种找工人</view>
+            <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
+          </view>
           <view class="menu-item" @click="checkLogin('/pages/employer/applicants/list')">
             <view class="icon">
               <uni-icons type="personadd" size="22" color="#2196F3"></uni-icons>

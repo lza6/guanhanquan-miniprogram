@@ -58,13 +58,6 @@
       }
     },
     {
-      "path": "pages/employer/categoryDetail",
-      "style": {
-        "navigationBarTitleText": "分类详情",
-        "navigationStyle": "custom"
-      }
-    },
-    {
       "path": "pages/training/training",
       "style": {
         "navigationBarTitleText": "在线培训",
@@ -128,20 +121,6 @@
       }
     },
     {
-      "path": "pages/login/register",
-      "style": {
-        "navigationBarTitleText": "注册",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/login/reset-password",
-      "style": {
-        "navigationBarTitleText": "重置密码",
-        "navigationStyle": "custom"
-      }
-    },
-    {
       "path": "pages/mine/myApplications",
       "style": {
         "navigationStyle": "custom",
@@ -150,12 +129,6 @@
     },
     {
       "path": "pages/employer/jobs/detail",
-      "style": {
-        "navigationBarTitleText": ""
-      }
-    },
-    {
-      "path": "pages/employer/jobs/jobDetail",
       "style": {
         "navigationBarTitleText": ""
       }
@@ -249,27 +222,6 @@
         "navigationStyle": "custom",
         "navigationBarTitleText": "客服中心"
       }
-    }
-  ],
-  "subPackages": [
-    {
-      "root": "employerPackage",
-      "pages": [
-        {
-          "path": "pages/postJob/index",
-          "style": {
-            "navigationBarTitleText": "发布岗位",
-            "navigationStyle": "custom"
-          }
-        },
-        {
-          "path": "pages/resume/index",
-          "style": {
-            "navigationBarTitleText": "雇员简历",
-            "navigationStyle": "custom"
-          }
-        }
-      ]
     }
   ],
   "globalStyle": {
