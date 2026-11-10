@@ -1,6 +1,6 @@
 <template>
   <view class="job-detail">
-    <cu-custom bgColor="bg-gradient-green">
+    <cu-custom bgColor="bg-gradual-green">
       <block slot="content">招工详情</block>
     </cu-custom>
 

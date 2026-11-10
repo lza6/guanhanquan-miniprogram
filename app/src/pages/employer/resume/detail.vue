@@ -2,7 +2,7 @@
   <view class="container">
     <!-- 自定义导航栏 -->
     <view class="cu-custom">
-      <view class="cu-bar fixed bg-gradient-green" style="height:90rpx;">
+      <view class="cu-bar fixed bg-gradual-green" style="height:90rpx;">
         <view class="action" @tap="goBack">
           <text class="cuIcon-back text-white"></text>
           <text class="text-white">返回</text>

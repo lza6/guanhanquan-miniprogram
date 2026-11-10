@@ -1,7 +1,7 @@
 <template>
   <view class="detail-container">
     <!-- 自定义导航栏 -->
-	<cu-custom bgColor="bg-gradient-green " isBack>
+	<cu-custom bgColor="bg-gradual-green " isBack>
 	  <block slot="content">{{ pageTitle }}</block>
 	</cu-custom>
     

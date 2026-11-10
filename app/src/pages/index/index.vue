@@ -1,7 +1,7 @@
 <template>
   <view class="index-container">
     <!-- 自定义导航栏 -->
-    <cu-custom bgColor="bg-gradient-green" :isBack="false">
+    <cu-custom bgColor="bg-gradual-green" :isBack="false">
       <block slot="content">
         <text class="header-title">管焊圈</text>
       </block>
@@ -97,20 +97,16 @@
       </view>
     </view>
     
-    <!-- 身份切换按钮 -->
-    <identity-switch></identity-switch>
   </view>
 </template>
 
 <script>
 import JobCard from '@/components/job-card.vue'
-import IdentitySwitch from '@/components/identity-switch.vue'
 import API from '@/api/index.js'
 
 export default {
   components: {
-    JobCard,
-    IdentitySwitch
+    JobCard
   },
   data() {
     return {
@@ -222,7 +218,7 @@ export default {
           return response.data.records.map(job => ({
             id: job.id,
             title: job.title,
-            salary: `${job.salary}元/天`,
+            salary: job.salary,
             gender: this.formatGender(job.genderRequirement) || '男女不限',
             jobType: job.categoryName || '临时工',
             contact: job.contact || job.location,

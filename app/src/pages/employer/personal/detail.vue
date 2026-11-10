@@ -2,7 +2,7 @@
   <view class="detail-container">
     <!-- 自定义导航栏 -->
     <view class="cu-custom">
-      <view class="cu-bar fixed bg-gradient-green" style="height:90rpx;">
+      <view class="cu-bar fixed bg-gradual-green" style="height:90rpx;">
         <navigator class="action" open-type="navigateBack" delta="1">
           <text class="cuIcon-back text-white"></text>
         </navigator>

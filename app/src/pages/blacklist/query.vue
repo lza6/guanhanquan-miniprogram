@@ -1,6 +1,6 @@
 <template>
   <view class="page">
-    <cu-custom bgColor="bg-gradient-green">
+    <cu-custom bgColor="bg-gradual-green">
       <block slot="content">黑老板查询</block>
     </cu-custom>
 

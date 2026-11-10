@@ -1,5 +1,17 @@
 import { CLOUD_ENV, API_FUNCTION, API_TIMEOUT, DEV_API_BASE } from '../config'
 
+
+/** 去掉 undefined / null / 空串，避免被序列化成 "undefined" 传给后端 */
+function prune(data) {
+  if (!data || typeof data !== 'object') return {}
+  const out = {}
+  Object.keys(data).forEach((k) => {
+    const v = data[k]
+    if (v !== undefined && v !== null && v !== '') out[k] = v
+  })
+  return out
+}
+
 let inited = false
 
 export function initCloud() {
@@ -62,6 +74,7 @@ function devRequest(path, method, data) {
 }
 
 export function callApi(path, method = 'GET', data = {}) {
+  data = prune(data)
   if (DEV_API_BASE) return devRequest(path, method, data)
   initCloud()
   return new Promise((resolve, reject) => {

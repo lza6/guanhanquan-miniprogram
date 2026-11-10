@@ -1,7 +1,7 @@
 <template>
   <view class="task-container">
     <!-- 自定义导航栏 -->
-    <cu-custom bgColor="bg-gradient-green">
+    <cu-custom bgColor="bg-gradual-green">
       <block slot="content">任务</block>
     </cu-custom>
     
@@ -123,13 +123,10 @@
       </view>
     </scroll-view>
     
-    <!-- 身份切换按钮 -->
-    <identity-switch></identity-switch>
   </view>
 </template>
 
 <script>
-import IdentitySwitch from '@/components/identity-switch.vue'
 import API from '@/api/index.js'
 
 export default {

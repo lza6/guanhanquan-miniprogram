@@ -1,7 +1,7 @@
 <template>
   <view class="my-applications">
     <!-- 自定义导航栏 -->
-    <cu-custom bgColor="bg-gradient-green " isBack>
+    <cu-custom bgColor="bg-gradual-green " isBack>
       <block slot="content">我的申请</block>
     </cu-custom>
     
