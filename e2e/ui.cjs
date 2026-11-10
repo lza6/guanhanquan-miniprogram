@@ -134,6 +134,38 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   const sec = await rp.$('.section-title')
   check('我的求职页渲染', !!sec, sec ? await sec.text() : '空')
 
+  // 13. 签到（真实点击 + 数值变化）
+  await mp.navigateTo('/pages/wallet/index')
+  await sleep(2500)
+  const wp2 = await mp.currentPage()
+  const before = (await (await wp2.$('.num')).text()) || '0'
+  const signBtn = await wp2.$('.sign')
+  if (signBtn) {
+    await signBtn.tap()
+    await sleep(2200)
+  }
+  const wp3 = await mp.currentPage()
+  const after = (await (await wp3.$('.num')).text()) || '0'
+  check('签到后积分增加', Number(after) > Number(before), before + ' -> ' + after)
+
+  // 14. 报名（真实点击 → 状态变已报名）
+  await mp.navigateTo('/pages/jobDetail/jobDetail?id=j2')
+  await sleep(2500)
+  const d1 = await mp.currentPage()
+  const btn1 = await d1.$('.primary')
+  check('详情页报名按钮存在', !!btn1, btn1 ? await btn1.text() : '无')
+  if (btn1 && (await btn1.text()) === '报名') {
+    await btn1.tap()
+    await sleep(2200)
+  }
+  await mp.navigateBack()
+  await sleep(1200)
+  await mp.navigateTo('/pages/jobDetail/jobDetail?id=j2')
+  await sleep(2200)
+  const d2 = await mp.currentPage()
+  const btn2 = await d2.$('.primary')
+  check('报名后按钮变已报名', !!btn2 && (await btn2.text()) === '已报名', btn2 ? await btn2.text() : '无')
+
   console.log('\n结果: ' + pass + ' 通过, ' + fail + ' 失败')
   if (fails.length) console.log('失败项: ' + fails.join(' / '))
   await mp.disconnect()

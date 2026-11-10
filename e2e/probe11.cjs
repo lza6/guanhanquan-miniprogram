@@ -1,0 +1,15 @@
+const path = require('path')
+const automator = require('miniprogram-automator')
+;(async () => {
+  const mp = await automator.connect({ wsEndpoint: 'ws://127.0.0.1:9420' })
+  await mp.navigateTo('/pages/wallet/index')
+  await new Promise(r => setTimeout(r, 3500))
+  await mp.screenshot({ path: path.join(__dirname, 'shots', 'wallet2.png') })
+  const page = await mp.currentPage()
+  const err = await page.$('.err')
+  const nums = await page.$$('.num')
+  let vals = []
+  for (const n of nums) vals.push(await n.text())
+  console.log('错误信息:', err ? await err.text() : '无', '| 数值:', vals.join(','))
+  await mp.disconnect(); process.exit(0)
+})().catch(e => { console.error('ERR', e.message); process.exit(1) })

@@ -21,6 +21,8 @@
       <button class="recharge" @tap="recharge">充值</button>
     </view>
 
+    <view class="card" v-if="err"><text class="err">加载失败：{{ err }}</text></view>
+
     <view class="card rules">
       <view class="section-title">消耗说明</view>
       <view class="rule"><text>查看联系方式</text><text class="cost">{{ info.contactCost }} 积分 / 次</text></view>
@@ -46,6 +48,7 @@ import api from '@/api/index.js'
 export default {
   data() {
     return {
+      err: '',
       info: { points: 0, balance: 0, signedToday: false, contactCost: 5, topCost: 30, signInPoints: 2 },
       records: []
     }
@@ -53,12 +56,21 @@ export default {
   onLoad() { this.load() },
   methods: {
     async load() {
+      this.err = ''
       try {
-        const [w, r] = await Promise.all([api.getWallet(), api.getWalletRecords({ page: 1, pageSize: 30 })])
-        this.info = w.data
+        const w = await api.getWallet()
+        this.info = w.data || this.info
+      } catch (e) {
+        this.err = '账户信息：' + (e && (e.message || e.errMsg)) || '未知'
+      }
+      try {
+        const r = await api.getWalletRecords({ page: 1, pageSize: 30 })
         this.records = (r.data && r.data.records) || []
-      } catch (e) {}
+      } catch (e2) {
+        this.err = (this.err ? this.err + '；' : '') + '流水：' + (e2 && (e2.message || e2.errMsg)) || '未知'
+      }
     },
+
     async signIn() {
       if (this.info.signedToday) return
       try {
@@ -100,5 +112,6 @@ export default {
 .remark { font-size: 22rpx; color: #999; }
 .plus { color: #52c41a; font-size: 30rpx; }
 .minus { color: #e54d42; font-size: 30rpx; }
+.err { color: #e54d42; font-size: 26rpx; }
 .empty { text-align: center; color: #999; font-size: 26rpx; padding: 30rpx 0; }
 </style>

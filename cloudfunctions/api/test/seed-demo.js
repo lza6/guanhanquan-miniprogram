@@ -42,7 +42,7 @@ module.exports = function seed(coll, L) {
       employerVerified: owner === 'emp_demo',
       title,
       categoryId: cat,
-      jobType: cat,
+      jobType: title,
       salary,
       salaryUnit: 1,
       workArea: area,

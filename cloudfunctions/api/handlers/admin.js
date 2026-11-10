@@ -48,6 +48,8 @@ exports.login = async (ctx) => {
 }
 
 exports.overview = async () => {
+  const dist = await distribution()
+
   const db = L.db()
   const startOfDay = new Date(new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10) + 'T00:00:00+08:00').getTime()
   const count = async (coll, where) => (await db.collection(coll).where(where || {}).count()).total
@@ -66,8 +68,28 @@ exports.overview = async () => {
     today: {
       newUsers: await count('users', { createdAt: L.cmd().gte(startOfDay) }),
       newJobs: await count('jobs', { createdAt: L.cmd().gte(startOfDay) })
-    }
+    },
+    byCategory: dist.byCategory,
+    byRegion: dist.byRegion
   })
+}
+
+/** 工种与地区分布（取前 8） */
+async function distribution() {
+  const res = await L.db().collection('jobs').where({ status: 1 }).limit(1000).get()
+  const cat = {}
+  const region = {}
+  res.data.forEach((j) => {
+    const c = j.title || j.jobType || '其他'
+    cat[c] = (cat[c] || 0) + 1
+    const r = String(j.workArea || '未填写').split(/[\s·,，]/)[0]
+    region[r] = (region[r] || 0) + 1
+  })
+  const top = (obj) => Object.keys(obj)
+    .map((k) => ({ name: k, count: obj[k] }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8)
+  return { byCategory: top(cat), byRegion: top(region) }
 }
 
 exports.jobs = async (ctx) => {

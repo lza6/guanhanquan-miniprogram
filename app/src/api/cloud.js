@@ -46,9 +46,8 @@ function handleFailure(body) {
 }
 
 function devRequest(path, method, data) {
-  // 本地联调固定身份，便于命中种子数据
-  const openid = uni.getStorageSync('ghq_dev_openid') || 'dev-openid'
-  if (!uni.getStorageSync('ghq_dev_openid')) uni.setStorageSync('ghq_dev_openid', openid)
+  // 本地联调固定身份，始终命中种子数据（忽略历史随机 id）
+  const openid = 'dev-openid'
   return new Promise((resolve, reject) => {
     uni.request({
       url: DEV_API_BASE + path,

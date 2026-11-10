@@ -18,6 +18,31 @@
         <el-descriptions-item label="驳回岗位">{{ d.jobs.rejected }}</el-descriptions-item>
       </el-descriptions>
     </div>
+
+    <el-row :gutter="16" style="margin-top: 16px">
+      <el-col :span="12">
+        <div class="page-card">
+          <h3 class="page-title">工种分布</h3>
+          <div class="bar-row" v-for="it in d.byCategory" :key="it.name">
+            <span class="bar-name">{{ it.name }}</span>
+            <span class="bar"><i :style="{ width: barWidth(it.count, d.byCategory) }"></i></span>
+            <span class="bar-num">{{ it.count }}</span>
+          </div>
+          <div v-if="!d.byCategory.length" class="empty">暂无数据</div>
+        </div>
+      </el-col>
+      <el-col :span="12">
+        <div class="page-card">
+          <h3 class="page-title">地区分布</h3>
+          <div class="bar-row" v-for="it in d.byRegion" :key="it.name">
+            <span class="bar-name">{{ it.name }}</span>
+            <span class="bar"><i :style="{ width: barWidth(it.count, d.byRegion) }"></i></span>
+            <span class="bar-num">{{ it.count }}</span>
+          </div>
+          <div v-if="!d.byRegion.length" class="empty">暂无数据</div>
+        </div>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -27,10 +52,16 @@ import { ElMessage } from 'element-plus'
 import api from '../api'
 
 const d = reactive({
+  byCategory: [], byRegion: [],
   users: 0, applications: 0, blacklistPending: 0, reportsPending: 0,
   jobs: { total: 0, pending: 0, online: 0, rejected: 0 },
   today: { newUsers: 0, newJobs: 0 }
 })
+
+function barWidth(n, list) {
+  const max = Math.max(1, ...list.map((x) => x.count))
+  return Math.round((n / max) * 100) + '%'
+}
 
 onMounted(async () => {
   try {
@@ -40,3 +71,12 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.bar-row { display: flex; align-items: center; margin-bottom: 10px; font-size: 13px; }
+.bar-name { width: 90px; color: #606266; }
+.bar { flex: 1; height: 10px; background: #f0f2f5; border-radius: 5px; margin: 0 8px; }
+.bar i { display: block; height: 10px; background: #409eff; border-radius: 5px; }
+.bar-num { width: 30px; text-align: right; color: #909399; }
+.empty { color: #c0c4cc; font-size: 13px; }
+</style>
