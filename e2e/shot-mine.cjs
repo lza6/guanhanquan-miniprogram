@@ -1,0 +1,13 @@
+const path = require('path')
+const automator = require('miniprogram-automator')
+;(async () => {
+  const mp = await automator.connect({ wsEndpoint: 'ws://127.0.0.1:9420' })
+  await mp.switchTab('/pages/mine/mine')
+  await new Promise(r => setTimeout(r, 3500))
+  await mp.screenshot({ path: path.join(__dirname, 'shots', 'mine2.png') })
+  const page = await mp.currentPage()
+  const loginBtn = await page.$('.login-btn')
+  const icon = await page.$('uni-icons')
+  console.log('登录按钮存在:', !!loginBtn, '| uni-icons 节点:', !!icon)
+  await mp.disconnect(); process.exit(0)
+})().catch(e => { console.error('ERR', e.message); process.exit(1) })

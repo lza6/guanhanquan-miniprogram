@@ -181,33 +181,24 @@ export default {
   data() {
     return {
       stats: { applicationCount: 0, favoriteCount: 0, certificationCount: 0 },
-      isLoggedIn: false
+      localUser: null,
+      wallet: { points: 0, balance: 0, income: '0.00' },
     }
   },
   computed: {
     ...mapState(['userType', 'userInfo']),
+    isLoggedIn() { return !!this.localUser },
     // 计算用户显示名称
     displayName() {
-      return this.isLoggedIn && this.userInfo ? this.userInfo.name : '未登录'
+      return this.localUser ? (this.localUser.nickname || '工友') : '未登录'
     },
     // 计算用户认证状态
     certification() {
-      return this.isLoggedIn && this.userInfo ? this.userInfo.certification : ''
+      return this.localUser && this.localUser.realNameVerified ? '已实名' : ''
     },
     // 计算用户资产信息
     walletInfo() {
-      if (!this.isLoggedIn || !this.userInfo) {
-        return {
-          balance: '0.00',
-          points: '0',
-          income: '0.00'
-        }
-      }
-      return {
-        balance: this.userInfo.balance || '0.00',
-        points: this.userInfo.points || '0',
-        income: this.userInfo.income || '0.00'
-      }
+      return this.wallet
     },
     // 计算统计数据
     statsInfo() {
@@ -215,10 +206,23 @@ export default {
     }
   },
   onShow() {
+    // 以本地缓存为准渲染登录态，避免 store 注入时序问题
+    const cached = uni.getStorageSync('ghq_user')
+    this.localUser = cached && cached.id ? cached : null
+    if (this.localUser && this.$store) this.$store.commit('setUserInfo', this.localUser)
+    this.loadWallet()
     this.checkLoginStatus()
     this.loadStats()
   },
   methods: {
+    async loadWallet() {
+      if (!this.localUser) return
+      try {
+        const res = await api.getWallet()
+        const d = res.data || {}
+        this.wallet = { points: d.points || 0, balance: d.balance || 0, income: '0.00' }
+      } catch (e) {}
+    },
     async loadStats() {
       if (!this.isLoggedIn) return
       try {
