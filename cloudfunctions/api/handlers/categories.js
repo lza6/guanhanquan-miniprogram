@@ -34,8 +34,13 @@ exports.list = async () => {
   const list = await loadCategories()
   const coll = L.db().collection('jobs')
   const withCount = []
+  const now = Date.now()
   for (const c of list) {
-    const total = (await coll.where({ status: 1, categoryId: c.id }).count()).total
+    const total = (await coll.where({
+      status: 1,
+      categoryId: c.id,
+      expireAt: L.cmd().gt(now)
+    }).count()).total
     withCount.push(Object.assign({}, c, { jobCount: total }))
   }
   return L.ok(withCount)
@@ -49,14 +54,23 @@ exports.detail = async (ctx) => {
 
 exports.jobs = async (ctx) => {
   const page = Math.max(1, parseInt(ctx.data.page, 10) || 1)
-  const pageSize = Math.min(50, parseInt(ctx.data.pageSize, 10) || 20)
-  const w = { status: 1, categoryId: ctx.params.id }
+  const pageSize = Math.min(50, Math.max(1, parseInt(ctx.data.pageSize, 10) || 20))
+  const now = Date.now()
+  const w = { status: 1, categoryId: ctx.params.id, expireAt: L.cmd().gt(now) }
   if (ctx.data.keyword) {
     w.title = L.db().RegExp({ regexp: String(ctx.data.keyword), options: 'i' })
   }
+  if (ctx.data.city) w.workArea = L.db().RegExp({ regexp: String(ctx.data.city), options: 'i' })
+  if (ctx.data.minSalary && ctx.data.maxSalary) {
+    w.salary = L.cmd().gte(Number(ctx.data.minSalary)).and(L.cmd().lte(Number(ctx.data.maxSalary)))
+  } else if (ctx.data.minSalary) {
+    w.salary = L.cmd().gte(Number(ctx.data.minSalary))
+  } else if (ctx.data.maxSalary) {
+    w.salary = L.cmd().lte(Number(ctx.data.maxSalary))
+  }
   const coll = L.db().collection('jobs').where(w)
   const total = (await coll.count()).total
-  const res = await coll.orderBy('isTop', 'desc').orderBy('createdAt', 'desc')
+  const res = await coll.orderBy('isTop', 'desc').orderBy('priorityAt', 'desc')
     .skip((page - 1) * pageSize).limit(pageSize).get()
   const records = res.data.map((j) => ({
     id: j._id,
@@ -65,8 +79,10 @@ exports.jobs = async (ctx) => {
     salaryUnit: j.salaryUnit || 1,
     workArea: j.workArea,
     duration: j.duration,
-    isTop: !!j.isTop,
+    isTop: !!j.isTop && Number(j.topExpireAt || 0) > now,
     isUrgent: !!j.isUrgent,
+    employerName: j.employerName || '',
+    employerVerified: !!j.employerVerified,
     createdAt: j.createdAt
   }))
   return L.ok(L.listResult(records, total, page, pageSize))
@@ -74,16 +90,18 @@ exports.jobs = async (ctx) => {
 
 exports.workers = async (ctx) => {
   const page = Math.max(1, parseInt(ctx.data.page, 10) || 1)
-  const pageSize = Math.min(50, parseInt(ctx.data.pageSize, 10) || 20)
+  const pageSize = Math.min(50, Math.max(1, parseInt(ctx.data.pageSize, 10) || 20))
   const w = { status: 0, jobTypes: L.db().RegExp({ regexp: String(ctx.params.id), options: 'i' }) }
-  const coll = L.db().collection('resumes').where(w)
-  const total = (await coll.count()).total
-  const res = await coll.orderBy('updatedAt', 'desc').skip((page - 1) * pageSize).limit(pageSize).get()
-  const records = res.data.map((r) => ({
+  const res = await L.db().collection('resumes').where(w).orderBy('updatedAt', 'desc').limit(200).get()
+  const visible = res.data.filter((r) => r.reviewStatus === undefined || r.reviewStatus === 1)
+  const total = visible.length
+  const slice = visible.slice((page - 1) * pageSize, page * pageSize)
+  const records = slice.map((r) => ({
     id: r._id,
     name: r.name || '未填写',
     avatar: r.avatar || '',
     jobTypes: r.jobTypes || [],
+    certificateInfo: r.certificateInfo || '',
     workExperience: r.workExperience || '',
     expectArea: r.expectArea || '',
     expectSalary: r.expectSalary || ''

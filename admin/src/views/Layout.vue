@@ -5,10 +5,13 @@
       <el-menu :default-active="$route.path" router background-color="#1f2d3d" text-color="#bfcbd9" active-text-color="#409eff">
         <el-menu-item index="/overview">运营概览</el-menu-item>
         <el-menu-item index="/jobs">招工审核</el-menu-item>
+        <el-menu-item index="/verifications">认证审核</el-menu-item>
+        <el-menu-item index="/resumes">简历审核</el-menu-item>
         <el-menu-item index="/users">用户管理</el-menu-item>
         <el-menu-item index="/blacklist">黑老板库</el-menu-item>
         <el-menu-item index="/reports">举报处理</el-menu-item>
         <el-menu-item index="/banners">轮播图</el-menu-item>
+        <el-menu-item index="/announcements">公告管理</el-menu-item>
         <el-menu-item index="/finance">财务流水</el-menu-item>
         <el-menu-item index="/feedback">客服反馈</el-menu-item>
       </el-menu>

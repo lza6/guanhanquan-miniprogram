@@ -1,7 +1,7 @@
 <template>
   <view class="employer-container">
     <!-- 自定义导航栏 -->
-    <nav-bar title="雇主个人中心"></nav-bar>
+    <nav-bar title="雇主中心"></nav-bar>
     
     <!-- 用户信息卡片 -->
     <view class="user-card">
@@ -31,8 +31,8 @@
         </view>
         <view class="divider"></view>
         <view class="wallet-item">
-          <text class="amount">¥{{walletInfo.expense}}</text>
-          <text class="label">总支出</text>
+          <text class="amount">{{walletInfo.expense}}</text>
+          <text class="label">企业认证</text>
         </view>
       </view>
       
@@ -48,25 +48,25 @@
       <view class="menu-group">
         <view class="menu-title">我的招聘</view>
         <view class="menu-list">
-          <view class="menu-item" @click="checkLogin('/pages/employer/jobs/list')">
+          <view class="menu-item" @click="checkLogin('/pages/employer/jobPost')">
             <view class="icon">
               <uni-icons type="paperplane" size="22" color="#4CAF50"></uni-icons>
             </view>
             <view class="text">发布职位</view>
             <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
           </view>
-          <view class="menu-item" @click="checkLogin('/pages/employer/jobs/detail?type=recruiting')">
+          <view class="menu-item" @click="checkLogin('/pages/employer/jobManage')">
             <view class="icon">
               <uni-icons type="staff" size="22" color="#FF9800"></uni-icons>
             </view>
-            <view class="text">正在招聘</view>
+            <view class="text">岗位管理</view>
             <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
           </view>
-          <view class="menu-item" @click="checkLogin('/pages/employer/jobs/detail?type=completed')">
+          <view class="menu-item" @click="checkLogin('/pages/employer/applicants/list')">
             <view class="icon">
               <uni-icons type="checkbox-filled" size="22" color="#4CAF50"></uni-icons>
             </view>
-            <view class="text">已完成职位</view>
+            <view class="text">报名管理</view>
             <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
           </view>
           <view class="menu-item" @click="checkLogin('/pages/employer/resume/index')">
@@ -88,7 +88,7 @@
               <uni-icons type="personadd" size="22" color="#2196F3"></uni-icons>
             </view>
             <view class="text">应聘者管理</view>
-            <view class="badge" v-if="userInfo && userInfo.hasNewApplicant">NEW</view>
+            
             <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
           </view>
         </view>
@@ -102,6 +102,13 @@
       <view class="menu-group">
         <view class="menu-title">其他</view>
         <view class="menu-list">
+          <view class="menu-item" @click="switchToWorker">
+            <view class="icon">
+              <uni-icons type="person" size="22" color="#1976D2"></uni-icons>
+            </view>
+            <view class="text">切换到工人端</view>
+            <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
+          </view>
           <view class="menu-item" @click="navigateTo('/pages/mine/feedback')">
             <view class="icon">
               <uni-icons type="help" size="22" color="#607D8B"></uni-icons>
@@ -124,7 +131,7 @@
     <view class="logout-btn" v-if="isLoggedIn" @click="handleLogout">退出登录</view>
     
     <!-- 身份切换按钮 -->
-    <identity-switch v-if="!isLoggedIn" ></identity-switch>
+    <identity-switch></identity-switch>
     
     <!-- 底部导航栏 -->
     <employer-tabbar current-tab="my"></employer-tabbar>
@@ -135,40 +142,31 @@
 import { mapState, mapMutations } from 'vuex'
 import IdentitySwitch from '@/components/identity-switch.vue'
 import EmployerTabbar from '@/components/employer-tabbar.vue'
-import EmployerNavbar from '@/components/employer-navbar.vue'
 import api from '@/api/index.js'
+import { getUser, setUser, clearAuth } from '@/utils/auth'
 
 export default {
-  components: {
-    IdentitySwitch,
-    EmployerTabbar,
-    EmployerNavbar
-  },
+  components: { IdentitySwitch, EmployerTabbar },
   data() {
-    return {
-      isLoggedIn: false
-    }
+    return { localUser: null }
   },
   computed: {
     ...mapState(['userType', 'userInfo']),
+    isLoggedIn() { return !!this.localUser },
     displayName() {
-      return this.isLoggedIn && this.userInfo ? this.userInfo.username || this.userInfo.companyName : '未登录'
+      const u = this.localUser || {}
+      return u.companyName || u.nickname || '未登录'
     },
     certification() {
-      return this.isLoggedIn && this.userInfo ? this.userInfo.certification || '企业用户' : ''
+      if (!this.localUser) return ''
+      return this.localUser.enterpriseVerified ? '企业已认证' : '企业未认证'
     },
     walletInfo() {
-      if (!this.isLoggedIn || !this.userInfo) {
-        return {
-          balance: '0.00',
-          points: '0',
-          expense: '0.00'
-        }
-      }
+      const u = this.localUser || {}
       return {
-        balance: this.userInfo.balance || '0.00',
-        points: this.userInfo.point || '0',
-        expense: this.userInfo.outcome || '0.00'
+        balance: u.balance || 0,
+        points: u.points || 0,
+        expense: u.enterpriseVerified ? '已认证' : '未认证'
       }
     }
   },
@@ -178,102 +176,62 @@ export default {
   methods: {
     ...mapMutations(['setUserInfo', 'toggleUserType']),
     checkLoginStatus() {
-      const token = uni.getStorageSync('token')
-      this.isLoggedIn = !!token
-      if (token) {
-        this.getUserProfile()
-      } else {
-        this.setUserInfo(null)
-        this.toggleUserType('')
-      }
+      this.localUser = getUser()
+      if (this.localUser) this.loadProfile()
     },
-    getUserProfile() {
-      uni.showLoading({ title: '加载中' })
-      
-      api.getEmployerProfile().then(res => {
-        if (res.code === 0) {
-          const userData = {
-            ...res.data,
-            jobsCount: res.data.jobsCount || 5,
-            favoritesCount: res.data.favoritesCount || 3,
-            recruitingCount: res.data.recruitingCount || 2,
-            hasNewApplicant: res.data.hasNewApplicant || true
-          }
-          
-          this.setUserInfo(userData)
-          this.toggleUserType('employer')
-        } else {
-          uni.showToast({
-            title: res.message || '获取用户信息失败',
-            icon: 'none'
-          })
+    async loadProfile() {
+      try {
+        const res = await api.getEmployerProfile()
+        const merged = Object.assign({}, this.localUser, res.data, { userType: 'employer' })
+        this.localUser = merged
+        setUser(merged)
+        this.setUserInfo(merged)
+        this.toggleUserType('employer')
+      } catch (e) {
+        if (e && e.code === 403) {
+          clearAuth()
+          this.localUser = null
         }
-      }).catch(err => {
-        console.error('获取用户信息失败', err)
-        if (err.statusCode === 401) {
-          this.handleLogout()
-        } else {
-          uni.showToast({
-            title: '获取用户信息失败',
-            icon: 'none'
-          })
-        }
-      }).finally(() => {
-        uni.hideLoading()
-      })
+      }
     },
     checkLogin(url) {
       if (this.isLoggedIn) {
         this.navigateTo(url)
-      } else {
-        uni.showModal({
-          title: '提示',
-          content: '请先登录',
-          confirmText: '去登录',
-          cancelText: '取消',
-          success: (res) => {
-            if (res.confirm) {
-              this.login()
-            }
-          }
-        })
+        return
       }
+      uni.showModal({
+        title: '提示',
+        content: '请先登录',
+        confirmText: '去登录',
+        cancelText: '取消',
+        success: (res) => { if (res.confirm) this.login() }
+      })
     },
     handleLogout() {
       uni.showModal({
         title: '提示',
         content: '确定要退出登录吗？',
         success: (res) => {
-          if (res.confirm) {
-            uni.removeStorageSync('token')
-            this.setUserInfo(null)
-            this.toggleUserType('')
-            this.isLoggedIn = false
-            uni.showToast({
-              title: '已退出登录',
-              icon: 'success'
-            })
-          }
+          if (!res.confirm) return
+          clearAuth()
+          this.localUser = null
+          this.setUserInfo(null)
+          this.toggleUserType('')
+          uni.reLaunch({ url: '/pages/login/login' })
         }
       })
     },
     login() {
-      uni.navigateTo({
-        url: '/pages/login/login'
-      })
+      uni.navigateTo({ url: '/pages/login/login' })
     },
     navigateTo(url) {
       uni.navigateTo({ url })
     },
-    editProfile() {
-      uni.navigateTo({
-        url: '/pages/mine/mine'
-      })
+    switchToWorker() {
+      uni.switchTab({ url: '/pages/mine/mine' })
     },
-    goToSettings() {
-      uni.navigateTo({
-        url: '/pages/employer/certification'
-      })
+    editProfile() {
+      uni.navigateTo({ url: '/pages/employer/certification' })
     }
   }
 }

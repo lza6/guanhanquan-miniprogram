@@ -7,16 +7,16 @@
 ```
 app/                小程序端（uni-app 3 + Vue 3 + Vite）
   src/api/          接口层：云函数调用 / 本地 HTTP 双通道
-  src/pages/        33 个页面
+  src/pages/        33 个已注册页面
   src/store/        Vuex 4
 cloudfunctions/
-  api/              单入口云函数，内部 60 条路由
+  api/              单入口云函数，91 条路由
     handlers/       auth jobs workers applications categories social wallet blacklist admin
-    test/           内存数据库 + 42 项业务验收
+    test/           内存数据库 + 111 项业务验收
   pay-notify/       微信支付回调
 admin/              运营后台（Vue 3 + Element Plus）
 scripts/dev-api.cjs 本地 API 服务（无需云环境即可联调）
-docs/               接口文档、部署说明、改造清单、验收矩阵
+docs/               交付验收与闭环报告（唯一文档）
 ```
 
 ## 本地开发（没有 AppID 也能跑）
@@ -35,22 +35,10 @@ VITE_LOCAL_API=http://localhost:3001/api npm run build:mp-weixin
 运营后台：
 
 ```bash
-cd admin && npm install && npm run dev   # http://localhost:5174，Vite 中间件直连同一套 handler
+cd admin && npm install && npm run dev   # 端口被占用时自动 +1
 ```
 
 默认管理员：`admin` / `dev-admin-pass`（仅本地内存库）。
-
-## 文档
-
-| 文档 | 内容 |
-|---|---|
-| [小程序联调与 E2E SOP](docs/小程序联调与E2E-SOP.md) | 无 AppID 本地跑通、automator 验收、7 类高频坑 |
-| [部署说明](docs/部署说明.md) | AppID/云环境/集合/云函数/支付配置 |
-| [验收矩阵](docs/验收矩阵.md) | 需求对照、已完成与遗留、验证证据 |
-
-## 云开发部署
-
-见 [docs/部署说明.md](docs/部署说明.md)：填 AppID 与云环境 ID → 建 20 个集合 → 部署两个云函数 → 配置环境变量 → 绑定微信支付。
 
 ## 业务验收
 
@@ -58,21 +46,27 @@ cd admin && npm install && npm run dev   # http://localhost:5174，Vite 中间�
 cd cloudfunctions/api && node test/run.js
 ```
 
-覆盖发布→审核→列表→详情→积分解锁→报名→录用→黑名单→置顶→收藏→越权拦截，当前 42 项全过。
+当前 111 项通过 0 失败。
 
-## 当前进度
+小程序 E2E：
 
-| 模块 | 状态 |
-|---|---|
-| 小程序框架（Vue3 + Vite） | 完成，编译通过 |
-| 云函数后端 | 完成，路由覆盖全部契约 |
-| 微信支付下单与回调 | 完成（需商户号后联调） |
-| 运营后台 | 完成，浏览器实测通过 |
-| 详情页 / 黑老板查询 / 举报 / 微信登录 | 完成 |
-| 首页筛选维度、发布页行业字段 | 进行中 |
-| 页面假数据替换 | 完成，接口失败即空态 |
+```bash
+cli.bat auto --project <仓库根目录> --auto-port 9420
+cd e2e && node ui.cjs       # 16 项
+cd e2e && node closure.cjs  # 17 项
+```
 
-详见 [docs/验收矩阵.md](docs/验收矩阵.md)。
+## 交付状态
+
+代码闭环完成：PDF 3.x 的 77 项功能点中 75 项闭环、2 项为明确产品取舍、0 项缺失。真实微信支付、真机绑手机、云环境部署仍需外部凭证。
+
+逐项需求矩阵、修复对账、验证证据、部署步骤与剩余风险见：
+
+**[docs/交付验收与缺口总表.md](docs/交付验收与缺口总表.md)**
+
+## 云开发部署
+
+见交付报告第七章：填 AppID 与云环境 ID → 建集合与索引 → 部署两个云函数 → 配置环境变量 → 绑定微信支付。
 
 ## 许可
 

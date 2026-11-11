@@ -1,7 +1,7 @@
 <template>
   <view class="category-workers-container">
     <!-- 自定义导航栏 -->
-    <nav-bar :title="categoryName"></nav-bar>
+    <nav-bar :title="categoryName" :showBack="true"></nav-bar>
     
     <!-- 搜索栏 -->
     <view class="search-bar">
@@ -38,34 +38,19 @@
         <view class="worker-info">
           <view class="name-tag">
             <text class="name">{{ worker.name }}</text>
-            <image v-if="worker.certified" src="/static/img/icons/certified.png" mode="aspectFit" class="certified-icon"></image>
-          </view>
-          <view class="badge" v-if="worker.online">
-            <view class="dot"></view>
-            <text>在线</text>
+            <text v-if="worker.certificateInfo" class="cert-tag">{{ worker.certificateInfo }}</text>
           </view>
         </view>
-        
         <view class="basic-info">
-          <text>{{ worker.gender }} · {{ worker.age }}岁 · {{ worker.education }}</text>
+          <text>{{ worker.workExperience || '年限未填' }} · {{ (worker.jobTypes || []).join(' / ') || '工种未填' }}</text>
         </view>
-        
         <view class="detail-info">
-          <view class="info-item">
-            <image src="/static/img/icons/location.png" mode="aspectFit"></image>
-            <text>工作区域: {{ worker.workArea || '不限' }}</text>
-          </view>
-          <view class="info-item">
-            <image src="/static/img/icons/work.png" mode="aspectFit"></image>
-            <text>从事工种: {{ worker.jobType }}</text>
-          </view>
+          <view class="info-item"><text>期望地区：{{ worker.expectArea || '不限' }}</text></view>
+          <view class="info-item"><text>期望薪资：{{ worker.expectSalary || '面议' }}</text></view>
         </view>
-        
-        <view class="update-time">{{ worker.updateTime }}</view>
-        
+        <view class="update-time">{{ fmt(worker.updatedAt) }}</view>
         <view class="action-buttons">
-          <button class="action-btn call-btn" @click.stop="callWorker(worker)">联系Ta</button>
-          <button class="action-btn message-btn" @click.stop="messageWorker(worker)">发消息</button>
+          <button class="action-btn call-btn" @click.stop="viewWorkerDetail(worker)">查看简历</button>
         </view>
       </view>
       
@@ -75,104 +60,6 @@
       </view>
     </scroll-view>
     
-    <!-- 筛选弹窗 -->
-    <uni-popup ref="filterPopup" type="bottom">
-      <view class="filter-popup">
-        <view class="filter-header">
-          <text>筛选</text>
-          <text class="close-btn" @click="closeFilterPopup">关闭</text>
-        </view>
-        
-        <view class="filter-content" v-if="currentFilterType === 'age'">
-          <view class="filter-option" :class="{active: ageFilter === ''}" @click="selectFilter('age', '')">
-            <text>不限</text>
-          </view>
-          <view class="filter-option" :class="{active: ageFilter === '18-25岁'}" @click="selectFilter('age', '18-25岁')">
-            <text>18-25岁</text>
-          </view>
-          <view class="filter-option" :class="{active: ageFilter === '26-35岁'}" @click="selectFilter('age', '26-35岁')">
-            <text>26-35岁</text>
-          </view>
-          <view class="filter-option" :class="{active: ageFilter === '36-45岁'}" @click="selectFilter('age', '36-45岁')">
-            <text>36-45岁</text>
-          </view>
-          <view class="filter-option" :class="{active: ageFilter === '46-55岁'}" @click="selectFilter('age', '46-55岁')">
-            <text>46-55岁</text>
-          </view>
-          <view class="filter-option" :class="{active: ageFilter === '55岁以上'}" @click="selectFilter('age', '55岁以上')">
-            <text>55岁以上</text>
-          </view>
-        </view>
-        
-        <view class="filter-content" v-if="currentFilterType === 'education'">
-          <view class="filter-option" :class="{active: educationFilter === ''}" @click="selectFilter('education', '')">
-            <text>不限</text>
-          </view>
-          <view class="filter-option" :class="{active: educationFilter === '小学'}" @click="selectFilter('education', '小学')">
-            <text>小学</text>
-          </view>
-          <view class="filter-option" :class="{active: educationFilter === '初中'}" @click="selectFilter('education', '初中')">
-            <text>初中</text>
-          </view>
-          <view class="filter-option" :class="{active: educationFilter === '高中'}" @click="selectFilter('education', '高中')">
-            <text>高中</text>
-          </view>
-          <view class="filter-option" :class="{active: educationFilter === '大专'}" @click="selectFilter('education', '大专')">
-            <text>大专</text>
-          </view>
-          <view class="filter-option" :class="{active: educationFilter === '本科及以上'}" @click="selectFilter('education', '本科及以上')">
-            <text>本科及以上</text>
-          </view>
-        </view>
-        
-        <view class="filter-content" v-if="currentFilterType === 'type'">
-          <view class="filter-option" :class="{active: typeFilter === ''}" @click="selectFilter('type', '')">
-            <text>不限</text>
-          </view>
-          <view class="filter-option" :class="{active: typeFilter === '家政/保洁'}" @click="selectFilter('type', '家政/保洁')">
-            <text>家政/保洁</text>
-          </view>
-          <view class="filter-option" :class="{active: typeFilter === '搬运工'}" @click="selectFilter('type', '搬运工')">
-            <text>搬运工</text>
-          </view>
-          <view class="filter-option" :class="{active: typeFilter === '餐饮服务'}" @click="selectFilter('type', '餐饮服务')">
-            <text>餐饮服务</text>
-          </view>
-          <view class="filter-option" :class="{active: typeFilter === '快递员'}" @click="selectFilter('type', '快递员')">
-            <text>快递员</text>
-          </view>
-        </view>
-        
-        <view class="filter-content" v-if="currentFilterType === 'region'">
-          <view class="filter-option" :class="{active: regionFilter === ''}" @click="selectFilter('region', '')">
-            <text>不限</text>
-          </view>
-          <view class="filter-option" :class="{active: regionFilter === '思明区'}" @click="selectFilter('region', '思明区')">
-            <text>思明区</text>
-          </view>
-          <view class="filter-option" :class="{active: regionFilter === '湖里区'}" @click="selectFilter('region', '湖里区')">
-            <text>湖里区</text>
-          </view>
-          <view class="filter-option" :class="{active: regionFilter === '集美区'}" @click="selectFilter('region', '集美区')">
-            <text>集美区</text>
-          </view>
-          <view class="filter-option" :class="{active: regionFilter === '海沧区'}" @click="selectFilter('region', '海沧区')">
-            <text>海沧区</text>
-          </view>
-          <view class="filter-option" :class="{active: regionFilter === '同安区'}" @click="selectFilter('region', '同安区')">
-            <text>同安区</text>
-          </view>
-          <view class="filter-option" :class="{active: regionFilter === '翔安区'}" @click="selectFilter('region', '翔安区')">
-            <text>翔安区</text>
-          </view>
-        </view>
-        
-        <view class="filter-actions">
-          <button class="reset-btn" @click="resetFilter">重置</button>
-          <button class="confirm-btn" @click="applyFilter">确定</button>
-        </view>
-      </view>
-    </uni-popup>
   </view>
 </template>
 
@@ -202,6 +89,11 @@ export default {
     this.loadWorkerList()
   },
   methods: {
+    fmt(ts) {
+      if (!ts) return ''
+      const d = new Date(ts)
+      return (d.getMonth() + 1) + '-' + d.getDate() + ' 更新'
+    },
     async loadWorkerList() {
       this.loading = true
       try {
@@ -237,59 +129,6 @@ export default {
         url: `/pages/worker/workerDetail?id=${worker.id}`
       })
     },
-    callWorker(worker) {
-      uni.makePhoneCall({
-        phoneNumber: worker.phone,
-        success: () => {
-          console.log('拨打电话成功')
-        },
-        fail: (err) => {
-          console.error('拨打电话失败', err)
-          uni.showToast({
-            title: '拨打电话失败',
-            icon: 'none'
-          })
-        }
-      })
-    },
-    messageWorker(worker) {
-      uni.navigateTo({
-        url: `/pages/message/chat?id=${worker.id}&name=${worker.name}`
-      })
-    },
-    showFilterPopup(type) {
-      this.currentFilterType = type
-      this.$refs.filterPopup.open()
-    },
-    closeFilterPopup() {
-      this.$refs.filterPopup.close()
-    },
-    selectFilter(type, value) {
-      if (type === 'age') {
-        this.ageFilter = value
-      } else if (type === 'education') {
-        this.educationFilter = value
-      } else if (type === 'type') {
-        this.typeFilter = value
-      } else if (type === 'region') {
-        this.regionFilter = value
-      }
-    },
-    resetFilter() {
-      if (this.currentFilterType === 'age') {
-        this.ageFilter = ''
-      } else if (this.currentFilterType === 'education') {
-        this.educationFilter = ''
-      } else if (this.currentFilterType === 'type') {
-        this.typeFilter = ''
-      } else if (this.currentFilterType === 'region') {
-        this.regionFilter = ''
-      }
-    },
-    applyFilter() {
-      this.closeFilterPopup()
-      this.loadWorkerList()
-    }
   }
 }
 </script>
@@ -377,7 +216,8 @@ export default {
         align-items: center;
         margin-bottom: 16rpx;
         
-        .name-tag {
+        .cert-tag { font-size: 20rpx; color: #52c41a; border: 1rpx solid #52c41a; border-radius: 4rpx; padding: 0 6rpx; margin-left: 8rpx; }
+  .name-tag {
           display: flex;
           align-items: center;
           

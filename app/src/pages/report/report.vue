@@ -79,7 +79,15 @@ export default {
       try {
         const evidence = []
         for (const p of this.images) {
-          evidence.push(await api.uploadFile(p, 'report'))
+          let fileID = ''
+          for (let attempt = 0; attempt < 2 && !fileID; attempt++) {
+            try {
+              fileID = await api.uploadFile(p, 'report')
+            } catch (e) {
+              if (attempt === 1) throw e
+            }
+          }
+          evidence.push(fileID)
         }
         await api.submitReport({
           jobId: this.jobId,

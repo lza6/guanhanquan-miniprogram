@@ -1,28 +1,18 @@
 <template>
   <view class="detail-container">
     <!-- 自定义导航栏 -->
-	<cu-custom bgColor="bg-gradual-green " isBack>
+	<cu-custom bgColor="bg-gradual-green" isBack>
 	  <block slot="content">{{ pageTitle }}</block>
 	</cu-custom>
     
     <!-- 菜单项 -->
     <scroll-view scroll-x class="bg-white nav solid-bottom">
       <view class="flex text-center">
-        <view class="cu-item flex-sub" :class="currentStatus === 'pending' ? 'text-blue cur' : ''" @tap="changeStatus('pending')">
-          待确认
-        </view>
-        <view class="cu-item flex-sub" :class="currentStatus === 'accepted' ? 'text-blue cur' : ''" @tap="changeStatus('accepted')">
-          已接单
-        </view>
-        <view class="cu-item flex-sub" :class="currentStatus === 'ongoing' ? 'text-blue cur' : ''" @tap="changeStatus('ongoing')">
-          服务中
-        </view>
-        <view class="cu-item flex-sub" :class="currentStatus === 'completed' ? 'text-blue cur' : ''" @tap="changeStatus('completed')">
-          已完成
-        </view>
-        <view class="cu-item flex-sub" :class="currentStatus === 'canceled' ? 'text-blue cur' : ''" @tap="changeStatus('canceled')">
-          已取消
-        </view>
+        <view class="cu-item flex-sub" :class="currentStatus === 0 ? 'text-blue cur' : ''" @tap="changeStatus(0)">待审核</view>
+        <view class="cu-item flex-sub" :class="currentStatus === 1 ? 'text-blue cur' : ''" @tap="changeStatus(1)">招聘中</view>
+        <view class="cu-item flex-sub" :class="currentStatus === 2 ? 'text-blue cur' : ''" @tap="changeStatus(2)">已暂停</view>
+        <view class="cu-item flex-sub" :class="currentStatus === 3 ? 'text-blue cur' : ''" @tap="changeStatus(3)">已过期</view>
+        <view class="cu-item flex-sub" :class="currentStatus === 4 ? 'text-blue cur' : ''" @tap="changeStatus(4)">已驳回</view>
       </view>
     </scroll-view>
     
@@ -87,11 +77,12 @@
 
 <script>
 import api from '@/api/index.js'
+import { salaryText } from '@/utils/job'
 export default {
   data() {
     return {
       type: '', // 页面类型: recruiting, reviewing, selecting, interviewing, completed
-      currentStatus: 'pending',
+      currentStatus: 1,
       jobList: [],
     }
   },
@@ -108,26 +99,27 @@ export default {
     }
   },
   onLoad(options) {
+    const map = { recruiting: 1, reviewing: 0, completed: 2 }
     if (options.type) {
       this.type = options.type
-      this.loadJobList()
+      if (map[options.type] !== undefined) this.currentStatus = map[options.type]
     }
+    this.loadJobList()
   },
   methods: {
     // 加载岗位列表
     async loadJobList() {
-      const statusMap = { recruiting: 1, reviewing: 0, completed: 2 }
       try {
         const res = await api.getEmployerJobs({
           page: 1,
           pageSize: 50,
-          status: statusMap[this.type] !== undefined ? statusMap[this.type] : ''
+          status: this.currentStatus
         })
         this.jobList = (res.data.records || []).map((j) => ({
           id: j.id,
           title: j.title,
           jobType: j.jobType,
-          salary: j.salary + ' 元/天',
+          salary: salaryText(j),
           timeRange: j.duration || '',
           address: j.workArea || '',
           content: '',
@@ -143,13 +135,13 @@ export default {
     // 切换状态标签
     changeStatus(status) {
       this.currentStatus = status
-      // 这里应该重新加载相应状态的数据
+      this.loadJobList()
     },
     
     // 查看详情
     goToDetail(job) {
       uni.navigateTo({
-        url: `/pages/employer/jobs/jobDetail?id=${job.id}`
+        url: `/pages/jobDetail/jobDetail?id=${job.id}`
       })
     },
     
@@ -163,18 +155,7 @@ export default {
     
     // 更新岗位状态
     updateStatus(job) {
-      const actionMap = {
-        'pending': '确认接单',
-        'accepted': '开始工作',
-        'ongoing': '完成工作',
-        'completed': '评价',
-        'canceled': '重新发布'
-      }
-      
-      uni.showToast({
-        title: actionMap[job.status] || '操作',
-        icon: 'none'
-      })
+      uni.navigateTo({ url: '/pages/employer/jobManage' })
     },
     
     // 获取操作按钮文字

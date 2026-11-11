@@ -27,6 +27,7 @@
 
 <script>
 import api from '@/api/index.js'
+import { setUser } from '@/utils/auth'
 
 export default {
   data() {
@@ -43,7 +44,7 @@ export default {
         const res = await api.login()
         const user = res.data.user
         this.$store.commit('setUserInfo', user)
-        uni.setStorageSync('ghq_user', user)
+        setUser(user)
         this.needPhone = !user.phone
         if (user.phone) this.finish()
       } catch (e) {
@@ -62,7 +63,7 @@ export default {
         const res = await api.bindPhone(code)
         const user = Object.assign({}, this.$store.state.userInfo, { phone: res.data.phone })
         this.$store.commit('setUserInfo', user)
-        uni.setStorageSync('ghq_user', user)
+        setUser(user)
         this.needPhone = false
         uni.showToast({ title: '绑定成功', icon: 'success' })
         setTimeout(() => this.finish(), 600)
@@ -76,8 +77,10 @@ export default {
     finish() {
       uni.switchTab({ url: '/pages/index/index' })
     },
-    showDoc() {
-      uni.showToast({ title: '协议内容待补充', icon: 'none' })
+    showDoc(name) {
+      uni.navigateTo({
+        url: name === 'user' ? '/pages/common/user-agreement' : '/pages/common/privacy-policy'
+      })
     }
   }
 }

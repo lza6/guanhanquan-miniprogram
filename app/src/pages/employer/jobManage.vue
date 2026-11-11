@@ -1,739 +1,223 @@
 <template>
-  <view class="job-manage-container">
-    <!-- 自定义导航栏 -->
+  <view class="page">
     <nav-bar title="岗位管理" :showBack="true"></nav-bar>
-    
-    <!-- 岗位状态筛选Tab -->
-    <view class="status-tabs">
-      <view class="tab-item" 
-        v-for="(tab, index) in tabs" 
-        :key="index" 
-        :class="{ active: activeTab === index }"
-        @click="switchTab(index)">
-        <text>{{ tab.name }}</text>
-        <view class="tab-badge" v-if="tab.count > 0">{{ tab.count }}</view>
+
+    <view class="tabs">
+      <view v-for="tab in tabs" :key="tab.value"
+        :class="['tab', { active: activeTab === tab.value }]"
+        @tap="activeTab = tab.value">
+        <text>{{ tab.label }}</text>
+        <text v-if="tab.count" class="count">{{ tab.count }}</text>
       </view>
     </view>
-    
-    <!-- 搜索栏 -->
-    <view class="search-bar">
-      <view class="search-input">
-        <uni-icons type="search" size="18" color="#999"></uni-icons>
-        <input type="text" placeholder="搜索岗位名称" v-model="searchText" @confirm="searchJobs" />
+
+    <view class="list">
+      <view class="item" v-for="job in filteredJobs" :key="job.id">
+        <view class="head" @tap="viewJob(job)">
+          <text class="title">{{ job.title }}</text>
+          <text :class="['status', 's' + job.status]">{{ statusText(job.status) }}</text>
+        </view>
+        <view class="meta">
+          <text>{{ salaryText(job) }}</text>
+          <text>· {{ job.workArea }}</text>
+          <text v-if="job.duration">· {{ job.duration }}</text>
+        </view>
+        <view class="stats">
+          <text>{{ job.viewCount }} 浏览</text>
+          <text>{{ job.applyCount }} 报名</text>
+          <text>{{ fmt(job.createdAt) }}</text>
+        </view>
+        <view class="actions">
+          <template v-if="job.status === 1">
+            <button class="btn primary" @tap="promote(job)">置顶 {{ wallet.topCost }} 分</button>
+            <button class="btn" @tap="refresh(job)">刷新 {{ wallet.refreshCost }} 分</button>
+            <button class="btn" @tap="pause(job)">暂停</button>
+            <button class="btn" @tap="applicants(job)">报名 {{ job.applyCount }}</button>
+          </template>
+          <template v-else-if="job.status === 2">
+            <button class="btn primary" @tap="resume(job)">恢复</button>
+          </template>
+          <button class="btn" @tap="edit(job)">编辑</button>
+          <button class="btn danger" @tap="remove(job)">删除</button>
+        </view>
+        <view v-if="job.status === 4 && job.rejectReason" class="reason">驳回原因：{{ job.rejectReason }}</view>
       </view>
-      <view class="filter-btn" @click="showFilterPopup">
-        <uni-icons type="filter" size="18" color="#666"></uni-icons>
-        <text>筛选</text>
-      </view>
-    </view>
-    
-    <!-- 岗位列表 -->
-    <view class="job-list" v-if="filteredJobs.length > 0">
-      <view class="job-item" v-for="(job, index) in filteredJobs" :key="index">
-        <view class="job-header" @click="gotoJobDetail(job)">
-          <view class="job-title">{{ job.title }}</view>
-          <view class="job-status" :class="job.statusClass">{{ job.statusText }}</view>
-        </view>
-        
-        <view class="job-info">
-          <view class="info-item">
-            <text class="label">工作地区：</text>
-            <text>{{ job.location }}</text>
-          </view>
-          <view class="info-item">
-            <text class="label">薪资待遇：</text>
-            <text class="salary">{{ job.salary }}</text>
-          </view>
-          <view class="info-item">
-            <text class="label">发布时间：</text>
-            <text>{{ job.publishTime }}</text>
-          </view>
-        </view>
-        
-        <view class="job-stats">
-          <view class="stat-item">
-            <text class="stat-num">{{ job.viewCount }}</text>
-            <text class="stat-label">浏览</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-num">{{ job.applyCount }}</text>
-            <text class="stat-label">申请</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-num">{{ job.hiredCount }}</text>
-            <text class="stat-label">已雇佣</text>
-          </view>
-        </view>
-        
-        <view class="job-actions">
-          <button class="action-btn" v-if="job.status === 'pending'" @click="updateJobStatus(job.id, 'published')">通过审核</button>
-          <button class="action-btn promote-btn" v-if="job.status === 'published'" @click="promoteJob(job)">推广</button>
-          <button class="action-btn" v-if="job.status === 'published'" @click="pauseJob(job)">暂停</button>
-          <button class="action-btn" v-if="job.status === 'paused'" @click="resumeJob(job)">恢复</button>
-          <button class="action-btn primary-btn" v-if="job.status === 'published' || job.status === 'paused'" @click="viewApplicants(job)">查看申请</button>
-          <button class="action-btn" v-if="job.status !== 'expired'" @click="editJob(job)">编辑</button>
-          <button class="action-btn delete-btn" @click="confirmDeleteJob(job)">删除</button>
-        </view>
+      <view v-if="!loading && !filteredJobs.length" class="empty">
+        <text>暂无岗位</text>
+        <button class="btn primary" @tap="publish">立即发布</button>
       </view>
     </view>
-    
-    <!-- 空状态 -->
-    <view class="empty-state" v-else>
-      <image src="/static/img/icons/empty.png" mode="aspectFit"></image>
-      <text>暂无岗位信息</text>
-      <button class="post-btn" @click="gotoPostJob">立即发布岗位</button>
-    </view>
-    
-    <!-- 筛选弹窗 -->
-    <uni-popup ref="filterPopup" type="bottom">
-      <view class="filter-popup">
-        <view class="popup-header">
-          <text>岗位筛选</text>
-          <view class="close-btn" @click="hideFilterPopup">×</view>
-        </view>
-        
-        <view class="filter-section">
-          <view class="section-title">发布时间</view>
-          <view class="filter-options">
-            <view class="option" 
-              v-for="(option, index) in timeFilters" 
-              :key="index"
-              :class="{ active: filters.timeRange === option.value }"
-              @click="selectTimeFilter(option.value)">
-              {{ option.label }}
-            </view>
-          </view>
-        </view>
-        
-        <view class="filter-section">
-          <view class="section-title">薪资范围</view>
-          <view class="filter-options">
-            <view class="option" 
-              v-for="(option, index) in salaryFilters" 
-              :key="index"
-              :class="{ active: filters.salaryRange === option.value }"
-              @click="selectSalaryFilter(option.value)">
-              {{ option.label }}
-            </view>
-          </view>
-        </view>
-        
-        <view class="filter-actions">
-          <button class="reset-btn" @click="resetFilters">重置</button>
-          <button class="confirm-btn" @click="applyFilters">确定</button>
-        </view>
-      </view>
-    </uni-popup>
   </view>
 </template>
 
 <script>
 import api from '@/api/index.js'
+import { salaryText } from '@/utils/job'
+
+const STATUS_TEXT = { 0: '待审核', 1: '招聘中', 2: '已暂停', 3: '已过期', 4: '已驳回' }
+
 export default {
   data() {
     return {
-      activeTab: 0,
-      searchText: '',
-      tabs: [
-        { name: '全部', count: 8 },
-        { name: '已发布', count: 5 },
-        { name: '审核中', count: 1 },
-        { name: '已暂停', count: 1 },
-        { name: '已过期', count: 1 }
-      ],
       jobs: [],
-      filters: {
-        timeRange: '',
-        salaryRange: ''
-      },
-      timeFilters: [
-        { label: '全部', value: '' },
-        { label: '今天', value: 'today' },
-        { label: '近3天', value: '3days' },
-        { label: '近一周', value: 'week' },
-        { label: '近一月', value: 'month' }
-      ],
-      salaryFilters: [
-        { label: '全部', value: '' },
-        { label: '3K以下', value: 'below3k' },
-        { label: '3K-5K', value: '3k-5k' },
-        { label: '5K-8K', value: '5k-8k' },
-        { label: '8K-12K', value: '8k-12k' },
-        { label: '12K以上', value: 'above12k' }
-      ]
+      loading: false,
+      activeTab: 'all',
+      wallet: { topCost: 30, refreshCost: 5 }
     }
   },
   computed: {
+    tabs() {
+      const count = (s) => this.jobs.filter((j) => j.status === s).length
+      return [
+        { label: '全部', value: 'all', count: this.jobs.length },
+        { label: '待审核', value: 0, count: count(0) },
+        { label: '招聘中', value: 1, count: count(1) },
+        { label: '已暂停', value: 2, count: count(2) },
+        { label: '已过期', value: 3, count: count(3) },
+        { label: '已驳回', value: 4, count: count(4) }
+      ]
+    },
     filteredJobs() {
-      let result = this.jobs
-      
-      // 筛选状态
-      if (this.activeTab === 1) {
-        result = result.filter(job => job.status === 'published')
-      } else if (this.activeTab === 2) {
-        result = result.filter(job => job.status === 'pending')
-      } else if (this.activeTab === 3) {
-        result = result.filter(job => job.status === 'paused')
-      } else if (this.activeTab === 4) {
-        result = result.filter(job => job.status === 'expired')
-      }
-      
-      // 搜索关键词
-      if (this.searchText) {
-        result = result.filter(job => 
-          job.title.toLowerCase().includes(this.searchText.toLowerCase())
-        )
-      }
-      
-      return result
+      if (this.activeTab === 'all') return this.jobs
+      return this.jobs.filter((j) => j.status === this.activeTab)
     }
   },
-  onLoad() {
-    this.loadJobs()
+  onShow() {
+    this.load()
   },
   methods: {
-    async loadJobs() {
+    salaryText,
+    statusText(s) { return STATUS_TEXT[s] || '未知' },
+    fmt(ts) {
+      if (!ts) return ''
+      const d = new Date(ts)
+      return (d.getMonth() + 1) + '-' + d.getDate()
+    },
+    async load() {
+      this.loading = true
       try {
-        const res = await api.getEmployerJobs({ page: 1, pageSize: 50 })
-        const map = { 0: '待审核', 1: '已发布', 2: '已下架', 3: '已过期', 4: '已驳回' }
-        const cls = { 0: 'warning', 1: 'success', 2: 'info', 3: 'info', 4: 'danger' }
-        this.jobs = (res.data.records || []).map((j) => ({
-          id: j.id,
-          title: j.title,
-          status: j.status,
-          statusText: map[j.status] || '未知',
-          statusClass: cls[j.status] || 'info',
-          location: j.workArea,
-          salary: j.salary + ' 元/天',
-          publishTime: this.formatTime(j.createdAt),
-          viewCount: j.viewCount || 0,
-          applyCount: j.applyCount || 0,
-          hiredCount: 0
-        }))
+        const [res, wallet] = await Promise.all([
+          api.getEmployerJobs({ page: 1, pageSize: 50 }),
+          api.getWallet().catch(() => null)
+        ])
+        this.jobs = (res.data && res.data.records) || []
+        if (wallet && wallet.data) {
+          this.wallet = {
+            topCost: wallet.data.topCost || 30,
+            refreshCost: wallet.data.refreshCost || 5
+          }
+        }
       } catch (e) {
         this.jobs = []
+      } finally {
+        this.loading = false
       }
     },
-    formatTime(ts) {
-      const d = new Date(ts)
-      return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate()
+    viewJob(job) {
+      uni.navigateTo({ url: '/pages/jobDetail/jobDetail?id=' + job.id })
     },
-    switchTab(index) {
-      this.activeTab = index
+    applicants(job) {
+      uni.navigateTo({ url: '/pages/employer/applicants/list?jobId=' + job.id })
     },
-    
-    searchJobs() {
-      // 已经通过计算属性filteredJobs自动筛选
-      console.log('搜索关键词：', this.searchText)
+    edit(job) {
+      uni.navigateTo({ url: '/pages/employer/jobPost?id=' + job.id })
     },
-    
-    gotoJobDetail(job) {
-      uni.navigateTo({
-        url: `/pages/jobDetail/jobDetail?id=${job.id}&isEmployer=true`
-      })
+    publish() {
+      uni.navigateTo({ url: '/pages/employer/jobPost' })
     },
-    
-    updateJobStatus(jobId, status) {
-      // 更新岗位状态
-      const index = this.jobs.findIndex(job => job.id === jobId)
-      if (index !== -1) {
-        this.jobs[index].status = status
-        this.jobs[index].statusText = status === 'published' ? '已发布' : '已暂停'
-        this.jobs[index].statusClass = status === 'published' ? 'success' : 'warning'
-        
-        uni.showToast({
-          title: '状态已更新',
-          icon: 'success'
-        })
-      }
+    async setStatus(job, status) {
+      try {
+        await api.setJobStatus(job.id, status)
+        uni.showToast({ title: status === 2 ? '已暂停' : '已恢复', icon: 'success' })
+        this.load()
+      } catch (e) {}
     },
-    
-    promoteJob(job) {
-      uni.navigateTo({
-        url: `/pages/employer/jobPromote?id=${job.id}`
-      })
-    },
-    
-    pauseJob(job) {
+    pause(job) {
       uni.showModal({
         title: '暂停岗位',
-        content: `确定要暂停"${job.title}"岗位吗？暂停后求职者将无法看到此岗位。`,
-        success: (res) => {
-          if (res.confirm) {
-            this.updateJobStatus(job.id, 'paused')
-          }
-        }
+        content: '暂停后工人暂时看不到这条岗位，可随时恢复。',
+        success: (r) => { if (r.confirm) this.setStatus(job, 2) }
       })
     },
-    
-    resumeJob(job) {
+    resume(job) {
       uni.showModal({
         title: '恢复岗位',
-        content: `确定要恢复"${job.title}"岗位吗？恢复后求职者可以继续看到此岗位。`,
-        success: (res) => {
-          if (res.confirm) {
-            this.updateJobStatus(job.id, 'published')
-          }
+        content: '恢复后岗位重新展示。',
+        success: (r) => { if (r.confirm) this.setStatus(job, 1) }
+      })
+    },
+    promote(job) {
+      uni.showModal({
+        title: '置顶岗位',
+        content: `将消耗 ${this.wallet.topCost} 积分，置顶 7 天，确认继续？`,
+        success: async (r) => {
+          if (!r.confirm) return
+          try {
+            await api.topJob(job.id)
+            uni.showToast({ title: '已置顶', icon: 'success' })
+            this.load()
+          } catch (e) {}
         }
       })
     },
-    
-    viewApplicants(job) {
-      uni.navigateTo({
-        url: `/pages/employer/applicants?jobId=${job.id}`
+    refresh(job) {
+      uni.showModal({
+        title: '刷新岗位',
+        content: `将消耗 ${this.wallet.refreshCost} 积分，把岗位排到更前，确认继续？`,
+        success: async (r) => {
+          if (!r.confirm) return
+          try {
+            await api.refreshJob(job.id)
+            uni.showToast({ title: '已刷新', icon: 'success' })
+            this.load()
+          } catch (e) {}
+        }
       })
     },
-    
-    editJob(job) {
-      uni.navigateTo({
-        url: `/pages/employer/jobPost?id=${job.id}&edit=true`
-      })
-    },
-    
-    confirmDeleteJob(job) {
+    remove(job) {
       uni.showModal({
         title: '删除岗位',
-        content: `确定要删除"${job.title}"岗位吗？此操作不可恢复。`,
-        success: (res) => {
-          if (res.confirm) {
-            this.deleteJob(job.id)
-          }
+        content: '删除后工人不可见，历史报名保留。确认删除？',
+        confirmColor: '#e54d42',
+        success: async (r) => {
+          if (!r.confirm) return
+          try {
+            await api.deleteJob(job.id)
+            uni.showToast({ title: '已删除', icon: 'success' })
+            this.load()
+          } catch (e) {}
         }
       })
-    },
-    
-    deleteJob(jobId) {
-      const index = this.jobs.findIndex(job => job.id === jobId)
-      if (index !== -1) {
-        this.jobs.splice(index, 1)
-        
-        // 更新tab计数
-        this.updateTabCounts()
-        
-        uni.showToast({
-          title: '删除成功',
-          icon: 'success'
-        })
-      }
-    },
-    
-    gotoPostJob() {
-      uni.navigateTo({
-        url: '/pages/employer/jobPost'
-      })
-    },
-    
-    showFilterPopup() {
-      this.$refs.filterPopup.open()
-    },
-    
-    hideFilterPopup() {
-      this.$refs.filterPopup.close()
-    },
-    
-    selectTimeFilter(value) {
-      this.filters.timeRange = value
-    },
-    
-    selectSalaryFilter(value) {
-      this.filters.salaryRange = value
-    },
-    
-    resetFilters() {
-      this.filters = {
-        timeRange: '',
-        salaryRange: ''
-      }
-    },
-    
-    applyFilters() {
-      // 应用筛选条件
-      console.log('应用筛选：', this.filters)
-      this.hideFilterPopup()
-      
-      // 这里应该调用接口获取筛选后的数据
-      // 示例代码仅作演示
-      uni.showToast({
-        title: '筛选已应用',
-        icon: 'success'
-      })
-    },
-    
-    updateTabCounts() {
-      // 更新各状态的计数
-      this.tabs[0].count = this.jobs.length
-      this.tabs[1].count = this.jobs.filter(job => job.status === 'published').length
-      this.tabs[2].count = this.jobs.filter(job => job.status === 'pending').length
-      this.tabs[3].count = this.jobs.filter(job => job.status === 'paused').length
-      this.tabs[4].count = this.jobs.filter(job => job.status === 'expired').length
     }
   }
 }
 </script>
 
-<style lang="scss">
-.job-manage-container {
-  min-height: 100vh;
-  background-color: #F5F5F5;
-  
-  .status-tabs {
-    display: flex;
-    background-color: #FFFFFF;
-    padding: 0 30rpx;
-    overflow-x: auto;
-    white-space: nowrap;
-    
-    .tab-item {
-      position: relative;
-      padding: 24rpx 0;
-      margin-right: 40rpx;
-      
-      text {
-        font-size: 28rpx;
-        color: #666;
-      }
-      
-      .tab-badge {
-        position: absolute;
-        top: 14rpx;
-        right: -20rpx;
-        min-width: 36rpx;
-        height: 36rpx;
-        border-radius: 18rpx;
-        background-color: #FF5722;
-        color: #FFFFFF;
-        font-size: 22rpx;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 8rpx;
-      }
-      
-      &.active {
-        text {
-          color: #4CAF50;
-          font-weight: bold;
-        }
-        
-        &::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 25%;
-          width: 50%;
-          height: 4rpx;
-          background-color: #4CAF50;
-        }
-      }
-    }
-  }
-  
-  .search-bar {
-    display: flex;
-    align-items: center;
-    padding: 20rpx 30rpx;
-    background-color: #FFFFFF;
-    border-top: 1rpx solid #EEEEEE;
-    
-    .search-input {
-      flex: 1;
-      height: 70rpx;
-      background-color: #F5F5F5;
-      border-radius: 35rpx;
-      display: flex;
-      align-items: center;
-      padding: 0 30rpx;
-      
-      uni-icons {
-        margin-right: 10rpx;
-      }
-      
-      input {
-        flex: 1;
-        height: 60rpx;
-        font-size: 28rpx;
-      }
-    }
-    
-    .filter-btn {
-      display: flex;
-      align-items: center;
-      margin-left: 20rpx;
-      padding: 10rpx 20rpx;
-      
-      uni-icons {
-        margin-right: 6rpx;
-      }
-      
-      text {
-        font-size: 28rpx;
-        color: #666;
-      }
-    }
-  }
-  
-  .job-list {
-    padding: 20rpx;
-    
-    .job-item {
-      background-color: #FFFFFF;
-      border-radius: 12rpx;
-      margin-bottom: 20rpx;
-      overflow: hidden;
-      
-      .job-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 24rpx;
-        border-bottom: 1rpx solid #F5F5F5;
-        
-        .job-title {
-          font-size: 32rpx;
-          font-weight: bold;
-          color: #333;
-        }
-        
-        .job-status {
-          font-size: 24rpx;
-          padding: 6rpx 16rpx;
-          border-radius: 20rpx;
-          
-          &.success {
-            color: #4CAF50;
-            background-color: rgba(76, 175, 80, 0.1);
-          }
-          
-          &.warning {
-            color: #FF9800;
-            background-color: rgba(255, 152, 0, 0.1);
-          }
-          
-          &.info {
-            color: #2196F3;
-            background-color: rgba(33, 150, 243, 0.1);
-          }
-          
-          &.default {
-            color: #9E9E9E;
-            background-color: rgba(158, 158, 158, 0.1);
-          }
-        }
-      }
-      
-      .job-info {
-        padding: 20rpx 24rpx;
-        border-bottom: 1rpx solid #F5F5F5;
-        
-        .info-item {
-          margin-bottom: 10rpx;
-          
-          &:last-child {
-            margin-bottom: 0;
-          }
-          
-          .label {
-            font-size: 26rpx;
-            color: #999;
-          }
-          
-          text {
-            font-size: 26rpx;
-            color: #666;
-          }
-          
-          .salary {
-            color: #FF5722;
-          }
-        }
-      }
-      
-      .job-stats {
-        display: flex;
-        padding: 20rpx 0;
-        background-color: #F9F9F9;
-        
-        .stat-item {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          position: relative;
-          
-          &:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 20%;
-            height: 60%;
-            width: 1rpx;
-            background-color: #EEEEEE;
-          }
-          
-          .stat-num {
-            font-size: 30rpx;
-            color: #333;
-            font-weight: bold;
-            margin-bottom: 6rpx;
-          }
-          
-          .stat-label {
-            font-size: 24rpx;
-            color: #999;
-          }
-        }
-      }
-      
-      .job-actions {
-        display: flex;
-        flex-wrap: wrap;
-        padding: 20rpx 24rpx;
-        
-        .action-btn {
-          height: 60rpx;
-          line-height: 60rpx;
-          font-size: 26rpx;
-          margin-right: 20rpx;
-          margin-bottom: 10rpx;
-          padding: 0 30rpx;
-          background-color: #F5F5F5;
-          color: #666;
-          border-radius: 30rpx;
-        }
-        
-        .primary-btn {
-          background-color: #4CAF50;
-          color: #FFFFFF;
-        }
-        
-        .promote-btn {
-          background-color: #FF9800;
-          color: #FFFFFF;
-        }
-        
-        .delete-btn {
-          background-color: #fff;
-          color: #FF5722;
-          border: 1rpx solid #FF5722;
-        }
-      }
-    }
-  }
-  
-  .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 100rpx 0;
-    
-    image {
-      width: 200rpx;
-      height: 200rpx;
-      margin-bottom: 30rpx;
-    }
-    
-    text {
-      font-size: 28rpx;
-      color: #999;
-      margin-bottom: 40rpx;
-    }
-    
-    .post-btn {
-      width: 300rpx;
-      height: 80rpx;
-      line-height: 80rpx;
-      background-color: #4CAF50;
-      color: #FFFFFF;
-      font-size: 28rpx;
-      border-radius: 40rpx;
-    }
-  }
-  
-  .filter-popup {
-    background-color: #FFFFFF;
-    border-radius: 24rpx 24rpx 0 0;
-    padding-bottom: 40rpx;
-    
-    .popup-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 30rpx;
-      border-bottom: 1rpx solid #F5F5F5;
-      
-      text {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #333;
-      }
-      
-      .close-btn {
-        width: 60rpx;
-        height: 60rpx;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 40rpx;
-        color: #999;
-      }
-    }
-    
-    .filter-section {
-      padding: 20rpx 30rpx;
-      
-      .section-title {
-        font-size: 28rpx;
-        color: #333;
-        margin-bottom: 20rpx;
-      }
-      
-      .filter-options {
-        display: flex;
-        flex-wrap: wrap;
-        
-        .option {
-          height: 60rpx;
-          line-height: 60rpx;
-          padding: 0 30rpx;
-          border-radius: 30rpx;
-          background-color: #F5F5F5;
-          font-size: 26rpx;
-          color: #666;
-          margin-right: 20rpx;
-          margin-bottom: 16rpx;
-          
-          &.active {
-            background-color: #E8F5E9;
-            color: #4CAF50;
-          }
-        }
-      }
-    }
-    
-    .filter-actions {
-      display: flex;
-      padding: 30rpx;
-      
-      button {
-        flex: 1;
-        height: 80rpx;
-        line-height: 80rpx;
-        font-size: 28rpx;
-        border-radius: 40rpx;
-      }
-      
-      .reset-btn {
-        background-color: #F5F5F5;
-        color: #666;
-        margin-right: 20rpx;
-      }
-      
-      .confirm-btn {
-        background-color: #4CAF50;
-        color: #FFFFFF;
-      }
-    }
-  }
-}
-</style> 
+<style lang="scss" scoped>
+.page { min-height: 100vh; background: #f5f6f8; padding-bottom: 40rpx; }
+.tabs { display: flex; flex-wrap: wrap; background: #fff; padding: 12rpx 20rpx; }
+.tab { padding: 10rpx 18rpx; margin-right: 12rpx; border-radius: 30rpx; background: #f5f6f8; font-size: 24rpx; color: #666; }
+.tab.active { background: #1976d2; color: #fff; }
+.count { margin-left: 6rpx; }
+.list { padding: 20rpx; }
+.item { background: #fff; border-radius: 16rpx; padding: 26rpx; margin-bottom: 20rpx; }
+.head { display: flex; justify-content: space-between; align-items: center; }
+.title { font-size: 32rpx; font-weight: 600; }
+.status { font-size: 22rpx; padding: 4rpx 12rpx; border-radius: 8rpx; }
+.s0 { background: #fff7e6; color: #fa8c16; }
+.s1 { background: #f6ffed; color: #52c41a; }
+.s2 { background: #f5f5f5; color: #999; }
+.s3 { background: #f0f0f0; color: #999; }
+.s4 { background: #fff1f0; color: #e54d42; }
+.meta { margin-top: 12rpx; font-size: 26rpx; color: #666; }
+.meta text { margin-right: 10rpx; }
+.stats { margin-top: 10rpx; display: flex; gap: 24rpx; font-size: 22rpx; color: #999; }
+.actions { display: flex; flex-wrap: wrap; margin-top: 18rpx; }
+.btn { margin: 0 12rpx 12rpx 0; font-size: 24rpx; padding: 0 20rpx; height: 58rpx; line-height: 58rpx; border-radius: 30rpx; background: #f5f6f8; color: #333; }
+.btn::after { border: none; }
+.btn.primary { background: #1976d2; color: #fff; }
+.btn.danger { background: #fff1f0; color: #e54d42; }
+.reason { margin-top: 8rpx; font-size: 22rpx; color: #e54d42; }
+.empty { text-align: center; color: #999; padding: 120rpx 0; font-size: 26rpx; }
+.empty .btn { display: inline-block; margin-top: 20rpx; }
+</style>

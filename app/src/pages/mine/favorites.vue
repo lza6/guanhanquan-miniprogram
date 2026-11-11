@@ -5,7 +5,7 @@
     <view class="card" v-for="j in list" :key="j.id" @tap="goDetail(j)">
       <view class="row">
         <text class="title">{{ j.title }}</text>
-        <text class="salary">{{ j.salary }}<text class="unit">元/天</text></text>
+        <text class="salary">{{ salaryText(j) }}</text>
       </view>
       <view class="meta">{{ j.workArea }} · {{ j.duration }}</view>
       <view class="ops">
@@ -19,10 +19,12 @@
 
 <script>
 import api from '@/api/index.js'
+import { salaryText } from '@/utils/job'
 export default {
   data() { return { list: [], loading: false } },
   onLoad() { this.load() },
   methods: {
+    salaryText,
     async load() {
       this.loading = true
       try {

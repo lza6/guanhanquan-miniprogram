@@ -276,11 +276,6 @@
         "query": ""
       },
       {
-        "name": "雇主模式-发布",
-        "path": "pages/employer/postJob/index",
-        "query": ""
-      },
-      {
         "name": "雇主模式-中心",
         "path": "pages/employer/index",
         "query": ""
@@ -288,16 +283,6 @@
       {
         "name": "登录页",
         "path": "pages/login/login",
-        "query": ""
-      },
-      {
-        "name": "注册页",
-        "path": "pages/login/register",
-        "query": ""
-      },
-      {
-        "name": "重置密码页",
-        "path": "pages/login/reset-password",
         "query": ""
       }
     ]

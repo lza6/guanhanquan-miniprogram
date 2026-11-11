@@ -12,8 +12,7 @@
           <text v-if="job.isTop" class="tag top">置顶</text>
         </view>
         <view class="salary">
-          <text class="amount">{{ job.salary }}</text>
-          <text class="unit">元/天</text>
+          <text class="amount">{{ salaryText(job) }}</text>
           <text v-if="job.duration" class="duration">{{ job.duration }}</text>
         </view>
         <view class="meta">
@@ -71,6 +70,7 @@
     <view v-if="!loading && !job" class="empty"><text>信息不存在或已下架</text></view>
 
     <view class="bottom-bar" v-if="job">
+      <button class="share-btn" open-type="share">分享</button>
       <view class="fav" @tap="toggleFavorite">
         <text :class="favorited ? 'fav-on' : 'fav-off'">{{ favorited ? '已收藏' : '收藏' }}</text>
       </view>
@@ -84,10 +84,7 @@
 
 <script>
 import api from '@/api/index.js'
-
-const PAY_TYPES = { 1: '压一付一', 2: '月结', 3: '完工结算', 4: '公司直发', 5: '面议' }
-const ACCOMMODATION = { 1: '管吃住', 2: '管住不管吃', 3: '不管吃住', 4: '面议' }
-const TRAVEL = { 1: '报销往返', 2: '报销单程', 3: '不报销', 4: '面议' }
+import { salaryText, PAY_TYPES, ACCOMMODATION, TRAVEL } from '@/utils/job'
 
 export default {
   data() {
@@ -126,6 +123,7 @@ export default {
     }
   },
   methods: {
+    salaryText,
     async load() {
       this.loading = true
       try {
@@ -252,7 +250,9 @@ export default {
   background: #fff; padding: 16rpx 24rpx calc(16rpx + constant(safe-area-inset-bottom));
   box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.05);
 }
-.fav { width: 140rpx; text-align: center; font-size: 26rpx; }
+.share-btn { width: 110rpx; background: transparent; color: #1976d2; font-size: 26rpx; line-height: 1.4; padding: 0; margin-right: 10rpx; }
+.share-btn::after { border: none; }
+.fav { width: 120rpx; text-align: center; font-size: 26rpx; }
 .fav-on { color: #fa8c16; }
 .fav-off { color: #999; }
 .primary {

@@ -8,6 +8,12 @@
       <div class="stat-card danger"><div class="label">待处理举报</div><div class="value">{{ d.reportsPending }}</div></div>
       <div class="stat-card"><div class="label">报名总数</div><div class="value">{{ d.applications }}</div></div>
       <div class="stat-card success"><div class="label">今日活跃</div><div class="value">{{ d.activeToday }}</div></div>
+      <div class="stat-card success"><div class="label">月活（30 天）</div><div class="value">{{ d.mau }}</div></div>
+      <div class="stat-card"><div class="label">本周新增岗位</div><div class="value">{{ d.weekJobs }}</div></div>
+      <div class="stat-card"><div class="label">本月新增岗位</div><div class="value">{{ d.monthJobs }}</div></div>
+      <div class="stat-card"><div class="label">本月新增用户</div><div class="value">{{ d.monthUsers }}</div></div>
+      <div class="stat-card warn"><div class="label">待审实名/企业</div><div class="value">{{ d.realNamePending }} / {{ d.enterprisePending }}</div></div>
+      <div class="stat-card warn"><div class="label">待审简历</div><div class="value">{{ d.resumePending }}</div></div>
       <div class="stat-card warn"><div class="label">待处理反馈</div><div class="value">{{ d.pendingFeedback }}</div></div>
     </div>
 
@@ -68,9 +74,10 @@ import { ElMessage } from 'element-plus'
 import api from '../api'
 
 const d = reactive({
-  byCategory: [], byRegion: [], trend7d: [], activeToday: 0, pendingFeedback: 0,
+  byCategory: [], byRegion: [], trend7d: [], activeToday: 0, mau: 0, weekJobs: 0, monthJobs: 0, monthUsers: 0,
+  realNamePending: 0, enterprisePending: 0, resumePending: 0, pendingFeedback: 0,
   users: 0, applications: 0, blacklistPending: 0, reportsPending: 0,
-  jobs: { total: 0, pending: 0, online: 0, rejected: 0 },
+  jobs: { total: 0, pending: 0, online: 0, expired: 0, rejected: 0 },
   today: { newUsers: 0, newJobs: 0 }
 })
 

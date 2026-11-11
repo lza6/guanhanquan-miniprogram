@@ -1,5 +1,10 @@
 const L = require('../lib')
 
+const statusOf = (verified, status) => {
+  if (status !== undefined && status !== null) return status
+  return verified ? 1 : -1
+}
+
 const publicUser = (u) => ({
   id: u._id,
   nickname: u.nickname,
@@ -8,23 +13,32 @@ const publicUser = (u) => ({
   userType: u.userType,
   points: u.points || 0,
   balance: u.balance || 0,
+  realName: u.realName ? String(u.realName).charAt(0) + '**' : '',
+  realNameStatus: statusOf(!!u.realNameVerified, u.realNameStatus),
   realNameVerified: !!u.realNameVerified,
-  enterpriseVerified: !!u.enterpriseVerified,
+  realNameRejectReason: u.realNameRejectReason || '',
   enterprise: u.enterprise || null,
-  createdAt: u.createdAt
+  enterpriseStatus: statusOf(!!u.enterpriseVerified, u.enterpriseStatus),
+  enterpriseVerified: !!u.enterpriseVerified,
+  enterpriseRejectReason: u.enterpriseRejectReason || '',
+  showPhone: u.showPhone !== false,
+  createdAt: u.createdAt,
+  lastLoginAt: u.lastLoginAt || 0
 })
+
+exports.publicUser = publicUser
 
 exports.login = async (ctx) => {
   const user = await L.ensureUser(ctx.openid)
   if (user.status === 1) return L.fail('账号已被封禁', 403)
   await L.db().collection('users').doc(user._id).update({ data: { lastLoginAt: Date.now() } })
-  return L.ok({ user: publicUser(user), openid: ctx.openid })
+  return L.ok({ user: publicUser(Object.assign(user, { lastLoginAt: Date.now() })), openid: ctx.openid })
 }
 
 exports.register = async (ctx) => {
   const { nickname, avatar, userType } = ctx.data
   const user = await L.ensureUser(ctx.openid)
-  const patch = { updatedAt: Date.now() }
+  const patch = { updatedAt: Date.now(), lastLoginAt: Date.now() }
   if (nickname) patch.nickname = String(nickname).slice(0, 20)
   if (avatar) patch.avatar = avatar
   if (userType === 'employer' || userType === 'worker') patch.userType = userType
@@ -51,14 +65,19 @@ exports.bindPhone = async (ctx) => {
   return L.ok({ phone })
 }
 
-exports.profile = async (ctx) => L.ok(publicUser(ctx.user))
+exports.profile = async (ctx) => {
+  const now = Date.now()
+  await L.db().collection('users').doc(ctx.user._id).update({ data: { lastLoginAt: now } })
+  return L.ok(publicUser(Object.assign(ctx.user, { lastLoginAt: now })))
+}
 
 exports.updateProfile = async (ctx) => {
-  const allow = ['nickname', 'avatar', 'gender', 'age', 'city', 'intro']
+  const allow = ['nickname', 'avatar', 'gender', 'age', 'city', 'intro', 'showPhone']
   const patch = { updatedAt: Date.now() }
   allow.forEach((k) => {
     if (ctx.data[k] !== undefined) patch[k] = ctx.data[k]
   })
+  if (patch.showPhone !== undefined) patch.showPhone = !!patch.showPhone
   await L.db().collection('users').doc(ctx.user._id).update({ data: patch })
   return L.ok(publicUser(Object.assign(ctx.user, patch)))
 }
@@ -73,7 +92,11 @@ exports.employerProfile = async (ctx) => {
     creditCode: enterprise.creditCode || '',
     license: enterprise.license || '',
     address: enterprise.address || '',
-    verified: !!ctx.user.enterpriseVerified
+    enterpriseStatus: statusOf(!!ctx.user.enterpriseVerified, ctx.user.enterpriseStatus),
+    rejectReason: ctx.user.enterpriseRejectReason || '',
+    verified: !!ctx.user.enterpriseVerified,
+    points: ctx.user.points || 0,
+    balance: ctx.user.balance || 0
   })
 }
 
@@ -87,13 +110,21 @@ exports.updateEmployerProfile = async (ctx) => {
     contactName: d.contactName || ''
   }
   await L.db().collection('users').doc(ctx.user._id).update({
-    data: { enterprise, userType: 'employer', updatedAt: Date.now() }
+    data: {
+      enterprise,
+      userType: 'employer',
+      enterpriseStatus: 0,
+      enterpriseVerified: false,
+      enterpriseRejectReason: '',
+      updatedAt: Date.now()
+    }
   })
-  return L.ok(enterprise)
+  return L.ok(Object.assign({}, enterprise, { status: 0 }))
 }
 
 /** 实名认证提交：进入待审核，管理端核验通过后置真 */
 exports.submitRealName = async (ctx) => {
+  if (ctx.user.realNameVerified) return L.fail('已通过实名认证，无需重复提交')
   const name = String((ctx.data && ctx.data.realName) || '').trim()
   const idCard = String((ctx.data && ctx.data.idCard) || '').trim()
   if (name.length < 2) return L.fail('请填写真实姓名')
@@ -104,8 +135,25 @@ exports.submitRealName = async (ctx) => {
       idCardEnc: L.encryptText(idCard),
       idCardMasked: idCard.slice(0, 4) + '**********' + idCard.slice(-4),
       realNameStatus: 0,
+      realNameVerified: false,
+      realNameRejectReason: '',
       updatedAt: Date.now()
     }
   })
   return L.ok({ status: 0 })
+}
+
+/** 账号注销：软删除并禁止后续登录；保留历史数据用于审计 */
+exports.deleteAccount = async (ctx) => {
+  await L.db().collection('users').doc(ctx.user._id).update({
+    data: {
+      status: 1,
+      deletedAt: Date.now(),
+      phone: '',
+      nickname: '已注销用户',
+      avatar: '',
+      updatedAt: Date.now()
+    }
+  })
+  return L.ok({ deleted: true })
 }

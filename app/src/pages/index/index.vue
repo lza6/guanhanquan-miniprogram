@@ -10,21 +10,18 @@
     <!-- 搜索栏 -->
     <view class="search-box">
       <view class="search-bar" @tap="goToSearch">
-        <view class="location-btn" @tap.stop="chooseCity">
-          <text>{{ city || '区域' }}</text>
-          <text class="cuIcon-unfold"></text>
-        </view>
+        <picker mode="region" :value="region" @change="onRegionChange">
+          <view class="location-btn">
+            <text>{{ city || '区域' }}</text>
+            <text class="cuIcon-unfold"></text>
+          </view>
+        </picker>
         <view class="search-form">
           <text class="cuIcon-search text-gray"></text>
           <text class="text-gray">您想找一份什么样的工作?</text>
         </view>
         <view class="search-btn">搜索</view>
       </view>
-    </view>
-
-    <view class="quick-row">
-      <view class="quick-chip" @tap="goBlacklist">查黑老板</view>
-      <view class="quick-chip" @tap="goWallet">积分 {{ points }}</view>
     </view>
 
     <!-- 轮播图 (招募广告) -->
@@ -125,13 +122,14 @@ export default {
       showPromoBanner: false,
       categories: [],
       city: '',
+      region: [],
       points: 0,
       recommendJobs: [],
       nearestJobs: [],
       latestJobs: [],
       isLoading: false,
       location: null,
-      pageSize: 10,
+      pageSize: 20,
       currentPage: 1,
       hasMore: true
     }
@@ -223,23 +221,13 @@ export default {
             })
             break
           case 'latest':
-            response = await API.getRecommendedJobs({ page, pageSize: this.pageSize, city: this.city || undefined })
+            response = await API.getLatestJobs({ page, pageSize: this.pageSize, city: this.city || undefined })
             break
         }
         
-        if (response && response.code === 0 && response && response.data) {
-          return response.data.records.map(job => ({
-            id: job.id,
-            title: job.title,
-            salary: job.salary,
-            gender: this.formatGender(job.genderRequirement) || '男女不限',
-            jobType: job.categoryName || '临时工',
-            contact: job.contact || job.location,
-            startTime: this.formatDate(job.startTime),
-            endTime: this.formatDate(job.endTime),
-            urgent: job.urgent,
-            hotJob: job.hotJob
-          }))
+        if (response && response.code === 0 && response.data) {
+          const records = response.data.records || []
+          return records.map((job) => Object.assign({}, job, { distance: job.distance }))
         }
         return []
       } catch (error) {
@@ -327,18 +315,17 @@ export default {
     },
 
 
-    chooseCity() {
-      const cities = ['全部城市', '沈阳', '乌鲁木齐', '合肥', '大连', '长春', '天津', '青岛']
-      uni.showActionSheet({
-        itemList: cities,
-        success: (r) => {
-          this.city = r.tapIndex === 0 ? '' : cities[r.tapIndex]
-          this.recommendJobs = []
-          this.nearestJobs = []
-          this.latestJobs = []
-          this.fetchHomeData()
-        }
-      })
+    onRegionChange(e) {
+      const picked = e.detail.value || []
+      this.region = picked
+      const raw = picked[1] || picked[0] || ''
+      this.city = String(raw).replace(/[省市]$/g, '')
+      this.recommendJobs = []
+      this.nearestJobs = []
+      this.latestJobs = []
+      this.currentPage = 1
+      this.hasMore = true
+      this.fetchHomeData()
     },
     goBlacklist() {
       uni.navigateTo({ url: '/pages/blacklist/query' })
@@ -381,11 +368,9 @@ export default {
 
     // 轮播图点击事件
     bannerTap(item) {
-      if (item.linkUrl) {
-        uni.navigateTo({
-          url: item.linkUrl
-        })
-      }
+      const url = item.link || item.linkUrl
+      if (!url) return
+      uni.navigateTo({ url })
     },
 
     // 跳转到分类页面
@@ -397,9 +382,7 @@ export default {
 
     // 查看更多工作
     gotoMoreJobs() {
-      uni.navigateTo({
-        url: `/pages/job/list?type=${this.currentTab}`
-      })
+      uni.switchTab({ url: '/pages/jobSearch/jobSearch' })
     },
 
     // 跳转到搜索页
@@ -451,10 +434,9 @@ export default {
           longitude: this.location.longitude,
           limit: 5
         }
-        const jobs = await API.getNearbyJobs(params)
-        if (jobs && jobs.length > 0) {
-          this.nearestJobs = jobs
-        }
+        const res = await API.getNearbyJobs(params)
+        const records = res && res.data && res.data.records ? res.data.records : []
+        if (records.length) this.nearestJobs = records
       } catch (error) {
         console.error('获取附近工作失败', error)
       }

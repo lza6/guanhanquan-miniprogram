@@ -161,15 +161,8 @@
     
     <!-- 底部操作按钮 -->
     <view class="bottom-actions">
-      <view class="action-btn collect" @tap="collectResume">
-        <text :class="isCollected ? 'cuIcon-favorfill text-orange' : 'cuIcon-favor'"></text>
-        <text>{{isCollected ? '已收藏' : '收藏'}}</text>
-      </view>
-      <view class="action-btn recommend" @tap="recommendJob">
-        <text>推单记录</text>
-      </view>
-      <view class="action-btn forward" @tap="forwardJob">
-        <text>推单给Ta</text>
+      <view class="action-btn recommend" @tap="callWorker">
+        <text>拨打电话</text>
       </view>
     </view>
   </view>
@@ -189,7 +182,7 @@ export default {
   },
   computed: {
     skillsList() {
-      return this.resumeInfo.skills ? this.resumeInfo.skills.split(',') : [];
+      return Array.isArray(this.resumeInfo.jobTypes) ? this.resumeInfo.jobTypes : []
     }
   },
   onLoad(options) {
@@ -211,7 +204,16 @@ export default {
       // 调用API获取零工详情
       API.getWorkerDetail(this.id).then(response => {
         if (response && response.code === 0 && response.data) {
-          this.resumeInfo = response.data;
+          const d = response.data
+          this.resumeInfo = Object.assign({}, d, {
+            skills: (d.jobTypes || []).join('、'),
+            experience: d.workExperience || '',
+            availability: d.availableTime || '',
+            phone: d.contactPhone || '',
+            hourlyRate: 0,
+            certificationStatus: d.certificateInfo ? 'verified' : '',
+            certificationCount: d.certificateInfo ? 1 : 0
+          })
         } else {
           uni.showToast({
             title: '获取零工信息失败',
@@ -229,37 +231,16 @@ export default {
       });
     },
     
-    collectResume() {
-      this.isCollected = !this.isCollected;
-      uni.showToast({
-        title: this.isCollected ? '收藏成功' : '已取消收藏',
-        icon: 'success'
-      });
+    callWorker() {
+      if (!this.resumeInfo.phone) return uni.showToast({ title: '未获取到联系电话', icon: 'none' })
+      uni.makePhoneCall({ phoneNumber: this.resumeInfo.phone })
     },
     
-    recommendJob() {
-      uni.showToast({
-        title: '查看推单记录',
-        icon: 'none'
-      });
-      // 可以跳转到对应页面
-      // uni.navigateTo({
-      //   url: `/pages/employer/recommend/list?workerId=${this.id}`
-      // });
-    },
+
     
-    forwardJob() {
-      uni.navigateTo({
-        url: `/pages/employer/jobForward?workerId=${this.id}`
-      });
-    },
+
     
-    shareResume() {
-      uni.showToast({
-        title: '分享功能开发中',
-        icon: 'none'
-      });
-    }
+
   }
 }
 </script>

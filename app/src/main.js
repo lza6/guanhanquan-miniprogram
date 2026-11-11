@@ -4,6 +4,7 @@ import store from './store'
 import jobCard from './components/job-card.vue'
 import identitySwitch from './components/identity-switch.vue'
 import cuCustom from './colorui/components/cu-custom.vue'
+import navBar from './components/nav-bar.vue'
 import { getSystemMetrics } from './utils/system'
 
 export function createApp() {
@@ -19,6 +20,7 @@ export function createApp() {
   app.component('job-card', jobCard)
   app.component('identity-switch', identitySwitch)
   app.component('cu-custom', cuCustom)
+  app.component('nav-bar', navBar)
 
   return { app }
 }

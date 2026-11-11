@@ -5,6 +5,9 @@
     
     <!-- 认证表单 -->
     <view class="form-container">
+      <view v-if="status === 0" class="status-banner">资料已提交，等待平台审核</view>
+      <view v-else-if="status === 2" class="status-banner danger">审核未通过：{{ rejectReason || '资料不完整' }}</view>
+      <view v-else-if="status === 1" class="status-banner success">企业认证已通过</view>
       <view class="form-title">企业信息</view>
       
       <!-- 企业名称 -->
@@ -49,10 +52,12 @@
           <text class="required">*</text>
           <text>所在地区</text>
         </view>
-        <view class="picker-item" @click="openRegionPicker">
-          <text class="picker-text">{{formData.region || '请选择地区'}}</text>
-          <uni-icons type="arrowright" size="16" color="#CCCCCC"></uni-icons>
-        </view>
+        <picker mode="region" :value="regionValue" @change="onRegionChange">
+          <view class="picker-item">
+            <text class="picker-text">{{formData.region || '请选择地区'}}</text>
+            <uni-icons type="arrowright" size="16" color="#CCCCCC"></uni-icons>
+          </view>
+        </picker>
       </view>
       
       <!-- 详细地址 -->
@@ -151,17 +156,33 @@ export default {
         license: '',
         logo: ''
       },
-      scaleOptions: ['50人以下', '50-200人', '200-500人', '500-1000人', '1000人以上']
+      scaleOptions: ['50人以下', '50-200人', '200-500人', '500-1000人', '1000人以上'],
+      regionValue: [],
+      status: -1,
+      rejectReason: ''
     }
   },
+  onLoad() {
+    this.loadProfile()
+  },
   methods: {
-    // 打开地区选择器
-    openRegionPicker() {
-      // 这里可以调用地区选择组件
-      uni.showToast({
-        title: '选择地区功能需集成地区选择器',
-        icon: 'none'
-      })
+    async loadProfile() {
+      try {
+        const res = await api.getEmployerProfile()
+        const d = res.data || {}
+        this.formData.companyName = d.companyName || ''
+        this.formData.creditCode = d.creditCode || ''
+        this.formData.license = d.license || ''
+        this.formData.region = d.address || ''
+        this.formData.contactPhone = d.contactPhone || ''
+        this.status = d.verified ? 1 : (d.enterpriseStatus === 0 ? 0 : (d.enterpriseStatus === 2 ? 2 : -1))
+        this.rejectReason = d.rejectReason || ''
+      } catch (e) {}
+    },
+    onRegionChange(e) {
+      const picked = e.detail.value || []
+      this.regionValue = picked
+      this.formData.region = picked.join(' ')
     },
     
     // 打开企业规模选择器
@@ -180,8 +201,18 @@ export default {
         count: 1,
         sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
-        success: (res) => {
-          this.formData[type] = res.tempFilePaths[0]
+        success: async (res) => {
+          const path = res.tempFilePaths[0]
+          this.formData[type] = path
+          try {
+            uni.showLoading({ title: '上传中' })
+            const fileID = await api.uploadFile(path, 'license')
+            this.formData[type] = fileID
+          } catch (e) {
+            uni.showToast({ title: '上传失败', icon: 'none' })
+          } finally {
+            uni.hideLoading()
+          }
         }
       })
     },
@@ -226,6 +257,7 @@ export default {
           contactName: this.formData.legalPerson
         })
         uni.hideLoading()
+        this.status = 0
         uni.showModal({
           title: '资料已提交',
           content: '平台会在 1-3 个工作日内核验，通过后展示认证标识。',
@@ -250,6 +282,9 @@ export default {
 </script>
 
 <style lang="scss">
+.status-banner { margin: 20rpx 30rpx 0; padding: 18rpx 24rpx; border-radius: 10rpx; background: #fff7e6; color: #fa8c16; font-size: 24rpx; }
+.status-banner.danger { background: #fff1f0; color: #e54d42; }
+.status-banner.success { background: #f6ffed; color: #52c41a; }
 .certification-container {
   min-height: 100vh;
   background-color: #F5F5F5;

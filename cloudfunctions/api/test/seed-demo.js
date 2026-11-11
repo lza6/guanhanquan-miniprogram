@@ -9,18 +9,29 @@ module.exports = function seed(coll, L) {
 
   coll('users').push(
     { _id: 'u1', _openid: 'dev-openid', nickname: '李师傅', phone: '13800001111', avatar: '', userType: 'worker',
-      points: 60, balance: 20, status: 0, realNameVerified: true, enterpriseVerified: false,
+      points: 60, balance: 20, status: 0, realName: '李师傅', idCardMasked: '2101**********1111',
+      realNameVerified: true, realNameStatus: 1,
+      enterpriseVerified: false, enterpriseStatus: -1, showPhone: true, lastSignDate: '',
       createdAt: now - DAY * 20, lastLoginAt: now },
     { _id: 'u2', _openid: 'emp_demo', nickname: '张工', phone: '13900002222', avatar: '', userType: 'employer',
-      points: 120, balance: 50, status: 0, realNameVerified: true, enterpriseVerified: true,
+      points: 120, balance: 50, status: 0, realName: '张工', idCardMasked: '2101**********2222',
+      realNameVerified: true, realNameStatus: 1,
+      enterpriseVerified: true, enterpriseStatus: 1, showPhone: true, lastSignDate: '',
       enterprise: { companyName: '沈阳中建安装工程处', creditCode: '91210100MA0Y000000', license: '', address: '沈阳市苏家屯区', contactName: '张工' },
       createdAt: now - DAY * 30, lastLoginAt: now },
     { _id: 'u3', _openid: 'emp2', nickname: '王老板', phone: '13700003333', avatar: '', userType: 'employer',
-      points: 30, balance: 0, status: 0, realNameVerified: false, enterpriseVerified: false,
+      points: 30, balance: 0, status: 0, realNameVerified: false, realNameStatus: -1,
+      enterpriseVerified: false, enterpriseStatus: 0, showPhone: true, lastSignDate: '',
+      enterprise: { companyName: '待审钢结构队', creditCode: '91210100MA0Z000000', license: '', address: '沈阳苏家屯', contactName: '王老板' },
       createdAt: now - DAY * 5, lastLoginAt: now },
     { _id: 'u4', _openid: 'w_demo2', nickname: '焊工老赵', phone: '13600004444', avatar: '', userType: 'worker',
-      points: 8, balance: 0, status: 0, realNameVerified: false, enterpriseVerified: false,
-      createdAt: now - DAY * 8, lastLoginAt: now }
+      points: 8, balance: 0, status: 0, realNameVerified: false, realNameStatus: -1,
+      enterpriseVerified: false, enterpriseStatus: -1, showPhone: true, lastSignDate: '',
+      createdAt: now - DAY * 8, lastLoginAt: now },
+    { _id: 'u5', _openid: 'pending_real', nickname: '待审王师傅', phone: '13500005555', avatar: '', userType: 'worker',
+      points: 0, balance: 0, status: 0, realName: '王五', idCardMasked: '2101**********1234',
+      realNameVerified: false, realNameStatus: 0, enterpriseVerified: false, enterpriseStatus: -1,
+      showPhone: true, lastSignDate: '', createdAt: now - DAY * 1, lastLoginAt: now }
   )
 
   const jobs = [
@@ -69,6 +80,7 @@ module.exports = function seed(coll, L) {
       latitude: lat,
       longitude: lng,
       createdAt: now - DAY * daysAgo,
+      priorityAt: now - DAY * daysAgo,
       updatedAt: now - DAY * daysAgo,
       expireAt: now + DAY * (8 - daysAgo)
     })
@@ -78,19 +90,26 @@ module.exports = function seed(coll, L) {
     { _id: 'r1', _openid: 'dev-openid', name: '李师傅', avatar: '', jobTypes: ['焊工', '管工'],
       certificateInfo: '双证焊工证', workExperience: '8 年', techDescription: '擅长氩电焊、不锈钢管道',
       expectArea: '东北三省', expectSalary: '600-700/天', availableTime: '随时到岗',
-      contactPhone: '13800001111', wechat: '', status: 0, createdAt: now - DAY * 10, updatedAt: now - DAY },
+      contactPhoneEnc: enc('13800001111'), wechat: '', status: 0, reviewStatus: 1, certificateImages: [],
+      createdAt: now - DAY * 10, updatedAt: now - DAY },
     { _id: 'r2', _openid: 'w_demo2', name: '焊工老赵', avatar: '', jobTypes: ['焊工'],
       certificateInfo: '单证', workExperience: '5 年', techDescription: '手工焊、二保焊',
       expectArea: '辽宁', expectSalary: '550/天', availableTime: '一周内',
-      contactPhone: '13600004444', wechat: '', status: 0, createdAt: now - DAY * 6, updatedAt: now - DAY * 2 }
+      contactPhoneEnc: enc('13600004444'), wechat: '', status: 0, reviewStatus: 1, certificateImages: [],
+      createdAt: now - DAY * 6, updatedAt: now - DAY * 2 },
+    { _id: 'r3', _openid: 'pending_real', name: '待审焊工', avatar: '', jobTypes: ['焊工', '管工'],
+      certificateInfo: '双证', workExperience: '3 年', techDescription: '氩弧焊、不锈钢管道',
+      expectArea: '沈阳', expectSalary: '500/天', availableTime: '随时到岗',
+      contactPhoneEnc: enc('13500005555'), wechat: '', status: 0, reviewStatus: 0, certificateImages: [],
+      createdAt: now - DAY * 1, updatedAt: now - DAY * 1 }
   )
 
   coll('applications').push(
     { _id: 'a1', jobId: 'j1', jobTitle: '管工', employerOpenid: 'emp_demo', workerOpenid: 'dev-openid',
-      workerName: '李师傅', workerPhone: '13800001111', coverLetter: '10 年管工经验', status: 'pending',
+      workerName: '李师傅', workerPhoneEnc: enc('13800001111'), coverLetter: '10 年管工经验', status: 'pending',
       createdAt: now - 3600000, updatedAt: now - 3600000 },
     { _id: 'a2', jobId: 'j4', jobTitle: '铆工', employerOpenid: 'emp2', workerOpenid: 'w_demo2',
-      workerName: '焊工老赵', workerPhone: '13600004444', coverLetter: '', status: 'accepted',
+      workerName: '焊工老赵', workerPhoneEnc: enc('13600004444'), coverLetter: '', status: 'accepted',
       createdAt: now - DAY * 2, updatedAt: now - DAY }
   )
 
@@ -110,7 +129,8 @@ module.exports = function seed(coll, L) {
     { _id: 'w1', openid: 'dev-openid', type: 1, amount: 2, businessType: '签到', businessId: '', remark: '每日签到', createdAt: now - DAY },
     { _id: 'w2', openid: 'dev-openid', type: 2, amount: -5, businessType: '查看联系方式', businessId: 'j2', remark: '焊工', createdAt: now - 3600000 },
     { _id: 'w3', openid: 'emp_demo', type: 3, amount: 50, businessType: '充值', businessId: 'o1', remark: '微信支付充值', createdAt: now - DAY * 2 },
-    { _id: 'w4', openid: 'emp_demo', type: 2, amount: -30, businessType: '置顶', businessId: 'j1', remark: '管工', createdAt: now - DAY * 2 }
+    { _id: 'w4', openid: 'emp_demo', type: 2, amount: -30, businessType: '置顶', businessId: 'j1', remark: '管工', createdAt: now - DAY * 2 },
+    { _id: 'w5', openid: 'dev-openid', type: 4, amount: -30, businessType: '购买保险', businessId: 'i1', remark: '意外伤害险（30 天）', createdAt: now - DAY * 6 }
   )
 
   coll('orders').push(
@@ -160,6 +180,14 @@ module.exports = function seed(coll, L) {
   coll('configs').push(
     { _id: 'c1', key: 'contactCost', value: 5, updatedAt: now },
     { _id: 'c2', key: 'topCost', value: 30, updatedAt: now },
-    { _id: 'c3', key: 'signInPoints', value: 2, updatedAt: now }
+    { _id: 'c3', key: 'signInPoints', value: 2, updatedAt: now },
+    { _id: 'c4', key: 'refreshCost', value: 5, updatedAt: now },
+    { _id: 'c5', key: 'profileTaskPoints', value: 5, updatedAt: now },
+    { _id: 'c6', key: 'blacklistQueryCost', value: 0, updatedAt: now }
+  )
+
+  coll('announcements').push(
+    { _id: 'an1', title: '平台上线公告', content: '管焊圈正式开放，发布招工与求职均免费，联系方式需积分解锁。',
+      pinned: true, enabled: true, createdAt: now - DAY * 2, updatedAt: now - DAY * 2 }
   )
 }

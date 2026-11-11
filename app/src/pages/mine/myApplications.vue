@@ -25,24 +25,23 @@
         :key="index"
       >
         <view class="job-info" @tap="viewJobDetail(item.jobId)">
-          <view class="job-title">{{ item.extraProperties.jobTitle }}</view>
+          <view class="job-title">{{ item.jobTitle }}</view>
           <view class="job-meta">
-            <text class="salary">¥{{ item.extraProperties.jobSalary }}/天</text>
-            <text class="location">{{ item.extraProperties.jobLocation }}</text>
+            <text class="salary">{{ salaryText({ salary: item.jobSalary, salaryUnit: item.jobSalaryUnit }) }}</text>
+            <text class="location">{{ item.jobWorkArea }}</text>
           </view>
-          <view class="job-requirements" v-if="item.extraProperties.jobRequirements">
-            <text class="label">要求：</text>
-            <text class="content">{{ item.extraProperties.jobRequirements }}</text>
+          <view class="job-requirements" v-if="item.jobDuration">
+            <text class="label">工期：</text>
+            <text class="content">{{ item.jobDuration }}</text>
           </view>
         </view>
         
         <view class="employer-info">
           <view class="company-info">
-            <text class="company">{{ item.extraProperties.employerCompany }}</text>
-            <text class="employer">{{ item.extraProperties.employerName }}</text>
+            <text class="company">{{ item.employerName || '雇主' }}</text>
           </view>
-          <view class="contact-info" v-if="item.status === 'accepted'">
-            <text class="phone">{{ item.extraProperties.employerPhone }}</text>
+          <view class="contact-info" v-if="item.status === 'accepted' && item.employerPhone">
+            <text class="phone">{{ item.employerPhone }}</text>
           </view>
         </view>
         
@@ -80,13 +79,14 @@
 
 <script>
 import API from '@/api/index.js'
+import { salaryText } from '@/utils/job'
 
 export default {
   data() {
     return {
       applications: [],
       currentPage: 1,
-      pageSize: 10,
+      pageSize: 20,
       hasMore: true,
       isLoading: false,
       currentStatus: '',
@@ -109,6 +109,7 @@ export default {
     })
   },
   methods: {
+    salaryText,
     // 加载申请列表
     async loadApplications(isLoadMore = false) {
       if (this.isLoading) return
@@ -117,7 +118,7 @@ export default {
       try {
         const res = await API.getWorkerApplications({
           page: this.currentPage,
-          size: this.pageSize,
+          pageSize: this.pageSize,
           status: this.currentStatus
         })
         

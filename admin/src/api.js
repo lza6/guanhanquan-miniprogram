@@ -27,13 +27,24 @@ export const api = {
   reviewJob: (id, data) => http.post(`/admin/jobs/${id}/review`, data),
 
   users: (params) => http.get('/admin/users', { params }),
+  userDetail: (id) => http.get(`/admin/users/${id}`),
   setUserStatus: (id, status) => http.post(`/admin/users/${id}/status`, { status }),
+
+  verifications: (params) => http.get('/admin/verifications', { params }),
+  reviewVerification: (id, data) => http.post(`/admin/verifications/${id}/review`, data),
+
+  resumes: (params) => http.get('/admin/resumes', { params }),
+  reviewResume: (id, data) => http.post(`/admin/resumes/${id}/review`, data),
 
   blacklist: (params) => http.get('/admin/blacklist', { params }),
   reviewBlacklist: (id, pass) => http.post(`/admin/blacklist/${id}/review`, { pass }),
 
   reports: (params) => http.get('/admin/reports', { params }),
   handleReport: (id, data) => http.post(`/admin/reports/${id}/handle`, data),
+
+  announcements: () => http.get('/admin/announcements'),
+  saveAnnouncement: (data) => http.post('/admin/announcements', data),
+  deleteAnnouncement: (id) => http.delete(`/admin/announcements/${id}`),
 
   banners: () => http.get('/admin/banners'),
   saveBanner: (data) => http.post('/admin/banners', data),

@@ -2,6 +2,7 @@
 import { initCloud } from './api/cloud'
 import { DEV_API_BASE } from './config'
 import api from './api/index.js'
+import { setUser, clearAuth } from './utils/auth'
 
 export default {
 	onLaunch() {
@@ -21,9 +22,9 @@ export default {
 			try {
 				const res = await api.getUserProfile()
 				this.$store.commit('setUserInfo', res.data)
-				uni.setStorageSync('ghq_user', res.data)
+				setUser(res.data)
 			} catch (e) {
-				// 未登录或后端未就绪时静默失败，由登录页兜底
+				if (e && e.code === 403) clearAuth()
 			}
 		}
 	}

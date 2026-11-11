@@ -17,11 +17,6 @@
 
         <!-- 筛选条件 -->
         <view class="filter-section">
-            <view class="filter-item" @click="showFilterPopup('gender')">
-                <text>{{ genderFilter || '男女不限' }}</text>
-                <image src="/static/img/icons/arrow-down.png" mode="aspectFit"
-                    style="width: 24rpx; height: 24rpx; margin-left: 4rpx;"></image>
-            </view>
             <view class="filter-item" @click="showFilterPopup('price')">
                 <text>{{ priceFilter || '价格' }}</text>
                 <image src="/static/img/icons/arrow-down.png" mode="aspectFit"
@@ -39,7 +34,6 @@
             :refresher-triggered="isRefreshing">
             <view class="job-item" v-for="(job, index) in jobList" :key="index" @click="viewJobDetail(job)">
                 <view class="job-header">
-                    <image class="job-icon" :src="job.icon" mode="aspectFit"></image>
                     <text class="job-title">{{ job.title }}</text>
                     <text class="price">{{ job.salary }}</text>
                 </view>
@@ -53,13 +47,11 @@
                 </view>
 
                 <view class="job-address">
-                    <text>直接联系：{{ job.contact }}</text>
+                    <text>工作地区：{{ job.workArea }}</text>
                 </view>
 
                 <view class="job-time">
-                    <text>{{ job.startTime }}</text>
-                    <text class="work-period">工作时间</text>
-                    <text>{{ job.endTime }}</text>
+                    <text>{{ job.duration || '工期面议' }}</text>
                 </view>
 
                 <button class="apply-btn" @click.stop="applyJob(job)">申请接单</button>
@@ -79,20 +71,6 @@
                     <text class="close-btn" @click="closeFilterPopup">关闭</text>
                 </view>
 
-                <view class="filter-content" v-if="currentFilterType === 'gender'">
-                    <view class="filter-option" :class="{ active: genderFilter === '男女不限' }"
-                        @click="selectFilter('gender', '男女不限')">
-                        <text>男女不限</text>
-                    </view>
-                    <view class="filter-option" :class="{ active: genderFilter === '男' }"
-                        @click="selectFilter('gender', '男')">
-                        <text>男</text>
-                    </view>
-                    <view class="filter-option" :class="{ active: genderFilter === '女' }"
-                        @click="selectFilter('gender', '女')">
-                        <text>女</text>
-                    </view>
-                </view>
 
                 <view class="filter-content" v-if="currentFilterType === 'price'">
                     <view class="filter-option" :class="{ active: priceFilter === '' }"
@@ -155,6 +133,7 @@
 
 <script>
 import API from '@/api/index.js'
+import { salaryText } from '@/utils/job'
 
 export default {
     data() {
@@ -169,7 +148,7 @@ export default {
             regionFilter: '',
             currentFilterType: '',
             currentPage: 1,
-            pageSize: 10,
+            pageSize: 20,
             hasMore: true,
             isLoading: false
         }
@@ -198,10 +177,7 @@ export default {
             
             try {
                 // 调用API获取工作列表
-                const response = await API.getJobsByCategory(this.categoryId, {
-                    page: this.currentPage,
-                    size: this.pageSize
-                })
+                const response = await API.getJobsByCategory(this.categoryId, this.queryParams())
 
                 if (response && response.code === 0 && response && response.data) {
                     const jobData = response.data
@@ -209,15 +185,13 @@ export default {
                     const formattedJobs = jobData.records.map(job => ({
                         id: job.id,
                         title: job.title,
-                        icon: job.icon || "/static/img/category/housekeeping.png",
-                        salary: `${job.salary}元/天`,
-                        gender: job.genderRequirement || '男女不限',
-                        jobType: this.categoryName,
-                        contact: job.contact || job.location,
-                        startTime: this.formatDate(job.startTime),
-                        endTime: this.formatDate(job.endTime),
-                        urgent: job.urgent,
-                        hotJob: job.hotJob
+                        salary: salaryText(job),
+                        jobType: job.jobType || this.categoryName,
+                        workArea: job.workArea || '',
+                        duration: job.duration || '',
+                        isTop: !!job.isTop,
+                        isUrgent: !!job.isUrgent,
+                        employerName: job.employerName || ''
                     }))
 
                     if (this.currentPage === 1) {
@@ -252,6 +226,20 @@ export default {
         },
         
 
+        queryParams() {
+            const priceMap = {
+                '200元/天以下': { maxSalary: 200 },
+                '200-300元/天': { minSalary: 200, maxSalary: 300 },
+                '300元/天以上': { minSalary: 300 }
+            }
+            const extra = priceMap[this.priceFilter] || {}
+            return Object.assign({
+                page: this.currentPage,
+                pageSize: this.pageSize,
+                keyword: this.keyword || undefined,
+                city: this.regionFilter || undefined
+            }, extra)
+        },
         // 搜索处理
         search() {
             this.currentPage = 1
@@ -297,17 +285,16 @@ export default {
                 url: `/pages/jobDetail/jobDetail?id=${job.id}`
             })
         },
-        applyJob(job) {
+        async applyJob(job) {
             uni.showModal({
                 title: '申请确认',
                 content: `确定申请"${job.title}"职位吗？`,
-                success: (res) => {
-                    if (res.confirm) {
-                        uni.showToast({
-                            title: '申请成功',
-                            icon: 'success'
-                        })
-                    }
+                success: async (res) => {
+                    if (!res.confirm) return
+                    try {
+                        await API.applyForJob(job.id, {})
+                        uni.showToast({ title: '申请成功', icon: 'success' })
+                    } catch (e) {}
                 }
             })
         },

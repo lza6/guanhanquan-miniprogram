@@ -17,6 +17,21 @@ exports.query = async (ctx) => {
   const phone = String(ctx.data.phone || '').replace(/\D/g, '')
   if (!/^1\d{10}$/.test(phone)) return L.fail('请输入 11 位手机号')
 
+  const cost = Number(await L.getConfig('blacklistQueryCost', 0))
+  if (cost > 0) {
+    const upd = await L.db().collection('users')
+      .where({ _id: ctx.user._id, points: L.cmd().gte(cost) })
+      .update({ data: { points: L.cmd().inc(-cost) } })
+    if (!upd.stats || upd.stats.updated !== 1) return L.fail('积分不足，无法查询', 402)
+    await L.db().collection('wallet').add({
+      data: {
+        openid: ctx.openid, type: 2, amount: -cost,
+        businessType: '黑老板查询', businessId: '', remark: L.maskPhone(phone),
+        createdAt: Date.now()
+      }
+    })
+  }
+
   const hash = L.hashPhone(phone, await salt())
   const res = await L.db().collection('blacklist')
     .where({ bossPhoneHash: hash, status: 1 })
@@ -37,7 +52,8 @@ exports.query = async (ctx) => {
     reasons: Object.keys(counts).map((k) => ({ name: k, count: counts[k] })),
     records,
     lastAt: records.length ? records[0].createdAt : null,
-    bossName: records.length ? (res.data[0].bossName || '') : ''
+    bossName: records.length ? (res.data[0].bossName || '') : '',
+    cost
   })
 }
 

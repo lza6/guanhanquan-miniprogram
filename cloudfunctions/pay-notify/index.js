@@ -23,9 +23,15 @@ exports.main = async (event) => {
   if (totalFee !== order.fen) return { errcode: 1, errmsg: 'amount mismatch' }
 
   const now = Date.now()
-  await db.collection('orders').doc(order._id).update({
-    data: { status: 'paid', paidAt: now, transactionId: event.transactionId || '', raw: event }
-  })
+  const upd = await db.collection('orders')
+    .where({ _id: order._id, status: 'pending' })
+    .update({
+      data: { status: 'paid', paidAt: now, transactionId: event.transactionId || '', raw: event }
+    })
+  if (!upd.stats || upd.stats.updated !== 1) {
+    // 并发回调只有一个请求能完成 pending -> paid 的状态迁移
+    return { errcode: 0, errmsg: 'already paid' }
+  }
   await db.collection('users').where({ _openid: order.openid }).update({
     data: { balance: L.cmd().inc(order.amount) }
   })

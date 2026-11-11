@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>管焊圈闭环变更报告</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --accent: #1976d2;
+    --ok: #16a34a;
+    --warn: #d97706;
+    --danger: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 30px; margin: 0 0 8px; }
+  h2 { font-size: 20px; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 16px; margin: 20px 0 8px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+  .metric { font-size: 28px; font-weight: 700; color: var(--accent); }
+  .label { color: var(--muted); font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  th, td { border-bottom: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; font-size: 14px; }
+  th { background: #f8fafc; font-weight: 600; }
+  tr:last-child td { border-bottom: 0; }
+  .ok { color: var(--ok); font-weight: 600; }
+  .warn { color: var(--warn); font-weight: 600; }
+  .danger { color: var(--danger); font-weight: 600; }
+  code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 13px; }
+  pre { background: #0f172a; color: #e2e8f0; padding: 14px 16px; border-radius: 8px; overflow: auto; font-size: 13px; }
+  ul { padding-left: 22px; }
+  .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .shot { background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .shot img { width: 100%; display: block; }
+  .shot div { padding: 8px 10px; color: var(--muted); font-size: 12px; }
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 8px 0; }
+  summary { cursor: pointer; font-weight: 600; }
+  .quiz { counter-reset: q; }
+  .quiz li { margin-bottom: 10px; }
+  .note { color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>管焊圈小程序 · 闭环变更报告</h1>
+  <p class="sub">2026-11-11 · 从“部分交付”到“代码闭环完成”</p>
+
+  <div class="grid">
+    <div class="card"><div class="metric">75 / 77</div><div class="label">PDF 功能点闭环</div></div>
+    <div class="card"><div class="metric">111 / 0</div><div class="label">业务用例 通过 / 失败</div></div>
+    <div class="card"><div class="metric">33 / 33</div><div class="label">小程序 E2E 断言</div></div>
+    <div class="card"><div class="metric">0</div><div class="label">未注册跳转（死链）</div></div>
+    <div class="card"><div class="metric">91</div><div class="label">云函数路由</div></div>
+    <div class="card"><div class="metric">33</div><div class="label">小程序页面</div></div>
+  </div>
+
+  <h2>1. 为什么做这次变更</h2>
+  <p>上一版文档声称“已落地”的功能中，有 4 个阻断级断点：招工方入口依赖从未写入的 token、首页卡片字段丢失、5 个页面没有导航栏、“我的申请”字段错配。另有实名/企业认证无审核、有效期/置顶不执行、支付只有后端。本轮把这些全部打通，并用测试、构建、模拟器 E2E 与后台浏览器验收结案。</p>
+
+  <h2>2. 关键决策</h2>
+  <ul>
+    <li><b>单一登录态</b>：删除从未写入的 token 判断，统一为 <code>ghq_user</code> + <code>userType</code>；个人中心与雇主中心都提供原生切换菜单。</li>
+    <li><b>懒过期</b>：不引入定时任务，读取岗位前把过期状态置 3、到期置顶写回 false；部署少一个组件，展示仍然正确。</li>
+    <li><b>认证审核独立状态</b>：<code>realNameStatus / enterpriseStatus</code> 与求职开关分开；简历新增 <code>reviewStatus</code>，避免复用一个字段。</li>
+    <li><b>简历电话加密</b>：与岗位电话一致，AES-256-GCM；列表脱敏，雇主详情按用户 <code>showPhone</code> 展示。</li>
+    <li><b>支付幂等</b>：订单状态条件更新 <code>pending → paid</code> 成功后才加余额，重复回调不重复入账。</li>
+    <li><b>发布即置顶</b>：发布页勾选“审核后置顶”，审核通过时由后台按当前积分配置扣分并置顶，失败会通知。</li>
+  </ul>
+
+  <h2>3. 实际修复</h2>
+  <table>
+    <thead><tr><th>问题</th><th>修复</th><th>证据</th></tr></thead>
+    <tbody>
+      <tr><td>招工方入口不可达</td><td>统一登录态；个人中心/雇主中心原生切换菜单；雇主资料接口加载</td><td>E2E <code>切换到雇主中心 pages/employer/index</code></td></tr>
+      <tr><td>首页卡片字段丢失</td><td>保留接口原始字段，补 distance；查看更多改搜索 tab</td><td>截图 <code>closure-01-index.png</code></td></tr>
+      <tr><td>5 页无导航栏</td><td>新建并全局注册 <code>nav-bar</code>（基于 cu-custom）</td><td><code>app.json</code> 全局组件；截图 <code>closure-06-mine.png</code></td></tr>
+      <tr><td>我的申请空白</td><td>后端关联岗位返回薪资/地区/雇主；前端读扁平字段</td><td>E2E <code>我的申请岗位名非空</code></td></tr>
+      <tr><td>实名/企业认证无审核</td><td>后台认证审核页 + 通知 + 驳回原因；通过后岗位带认证标识</td><td>用例 [13] + 后台截图</td></tr>
+      <tr><td>有效期/置顶不执行</td><td>读取前懒过期；到期置顶写回 false；发布可选 7/15/30 天</td><td>用例 [11]</td></tr>
+      <tr><td>岗位管理假操作</td><td>暂停/恢复/删除/置顶/刷新/编辑全部走接口</td><td>用例 [11]</td></tr>
+      <tr><td>充值只有提示</td><td>金额选择 + <code>uni.requestPayment</code> + 回调幂等</td><td>用例 [16]</td></tr>
+      <tr><td>简历电话明文</td><td><code>contactPhoneEnc</code> 加密；列表脱敏；showPhone 控制</td><td>用例 [14]</td></tr>
+      <tr><td>消息无公告</td><td>公告 CRUD + 小程序展示</td><td>用例 [15] + 后台浏览器实测</td></tr>
+      <tr><td>后台统计/财务不足</td><td>月活、周/月岗位、待审认证/简历；积分/余额拆分、按业务汇总</td><td>后台截图 <code>overview.png</code>、<code>finance.png</code></td></tr>
+      <tr><td>黑老板查询免费</td><td>后台可配置查询扣分（默认 0）</td><td>用例 [17]</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. 验证证据</h2>
+  <pre>cd cloudfunctions/api && node test/run.js
+结果: 111 通过, 0 失败
+
+cd app && npm run build:mp-weixin
+DONE  Build complete. 33 页，app.wxss 123,816 字节
+生产产物 localhost:3001 引用: 0
+
+cd admin && npm run build
+✓ built in 5.20s
+
+cd e2e && node ui.cjs      → 16 通过, 0 失败
+cd e2e && node closure.cjs → 17 通过, 0 失败</pre>
+
+  <h3>小程序截图</h3>
+  <div class="shots">
+    <div class="shot"><img src="../e2e/shots/closure-01-index.png" alt="首页" /><div>首页：分类、轮播、卡片含地区/工期/认证/时间</div></div>
+    <div class="shot"><img src="../e2e/shots/closure-03-detail.png" alt="详情" /><div>详情：550元/天、岗位要求、待遇、联系方式</div></div>
+    <div class="shot"><img src="../e2e/shots/closure-06-mine.png" alt="个人中心" /><div>个人中心：导航标题、13 个菜单、切换招工方</div></div>
+    <div class="shot"><img src="../e2e/shots/closure-11-wallet.png" alt="钱包" /><div>钱包：签到、充值、查黑老板、刷新价目</div></div>
+  </div>
+
+  <h3>后台截图</h3>
+  <div class="shots">
+    <div class="shot"><img src="../admin/shots/overview.png" alt="概览" /><div>概览：月活、周/月岗位、待审认证/简历、趋势、分布</div></div>
+    <div class="shot"><img src="../admin/shots/verifications.png" alt="认证审核" /><div>认证审核：实名待审、通过/驳回</div></div>
+    <div class="shot"><img src="../admin/shots/resumes.png" alt="简历审核" /><div>简历审核：工种、证书、年限、技术描述</div></div>
+    <div class="shot"><img src="../admin/shots/finance.png" alt="财务" /><div>财务：充值、积分/余额消耗、按业务汇总</div></div>
+  </div>
+
+  <h2>5. 风险与回滚</h2>
+  <table>
+    <thead><tr><th>项</th><th>级别</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>真实支付 / 真机绑手机 / 云部署</td><td class="danger">高</td><td>需商户号、已认证 AppID、云环境；代码与本地用例已过</td></tr>
+      <tr><td>报名并发重复插入</td><td class="warn">中</td><td>先查后插；生产建议加唯一约束或事务。单用户重复已拦截</td></tr>
+      <tr><td>管理端限流</td><td class="warn">中</td><td>进程内 5 次失败锁 5 分钟；多实例需网关/数据库限流</td></tr>
+      <tr><td>区县筛选 / 短信登录 / 轮播上传</td><td class="warn">低</td><td>明确产品取舍，已在交付报告记录</td></tr>
+    </tbody>
+  </table>
+  <p><b>回滚：</b>所有修改在 git diff 中逐文件可回滚；旧文档通过 git rm 删除，可从 HEAD 恢复；构建产物为 gitignored，可重新生成。</p>
+
+  <h2>6. 自测题</h2>
+  <div class="quiz">
+    <details><summary>1. 为什么删除 token 判断，而不是补写 token？</summary><p>登录身份来自微信云函数上下文 <code>OPENID</code>，前端没有独立的账号密码会话；token 是历史残留。统一 <code>ghq_user</code> 避免两套状态不一致。</p></details>
+    <details><summary>2. 过期岗位为什么不用定时任务也正确？</summary><p>列表/详情/附近/最新/分类在读取前执行 <code>sweepExpired</code>，把 <code>expireAt</code> 到期的岗位置 3、到期置顶写回 false；展示口径始终正确。定时任务只是可选的清理手段。</p></details>
+    <details><summary>3. 支付回调两次为什么只加一次余额？</summary><p><code>orders.status</code> 从 pending 到 paid 使用条件更新；只有 <code>stats.updated === 1</code> 的请求继续加余额，第二个请求返回 already paid。</p></details>
+    <details><summary>4. 简历审核为什么要新增 reviewStatus，不复用 status？</summary><p><code>status</code> 已表示求职开关（开启/关闭）。复用会让“关闭求职”和“审核驳回”混在一起，无法区分。</p></details>
+    <details><summary>5. 招工方入口的验收路径是什么？</summary><p>清缓存 → 我的 → 切换到招工方 → 雇主中心 → 发布职位 → 提交 → 后台招工审核出现待审记录。E2E closure 已断言切换到 <code>pages/employer/index</code>。</p></details>
+  </div>
+  <p class="note">通过标准：能答出 4/5 以上；答案不是背结论，而是能指出对应代码或验证命令。</p>
+
+  <p class="note" style="margin-top:28px">完整逐项矩阵、部署步骤、数据模型与剩余风险见 <code>docs/交付验收与缺口总表.md</code>。</p>
+</main>
+</body>
+</html>

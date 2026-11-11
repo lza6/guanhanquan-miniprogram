@@ -111,8 +111,9 @@ exports.favorites = async (ctx) => {
   const records = favs.data.filter((f) => map[f.jobId]).map((f) => {
     const j = map[f.jobId]
     return {
-      id: j._id, title: j.title, salary: j.salary, workArea: j.workArea,
-      duration: j.duration, isTop: !!j.isTop, status: j.status, favoritedAt: f.createdAt
+      id: j._id, title: j.title, salary: j.salary, salaryUnit: j.salaryUnit || 1,
+      workArea: j.workArea, duration: j.duration, isTop: !!j.isTop,
+      status: j.status, favoritedAt: f.createdAt
     }
   })
   return L.ok(L.listResult(records, total, page, pageSize))
@@ -245,4 +246,19 @@ exports.myFeedback = async (ctx) => {
     total: res.data.length,
     totalPage: 1
   })
+}
+
+/* ---------- 平台公告 ---------- */
+exports.announcements = async () => {
+  const now = Date.now()
+  const res = await L.db().collection('announcements')
+    .where({ enabled: true }).orderBy('pinned', 'desc').orderBy('createdAt', 'desc')
+    .limit(20).get().catch(() => ({ data: [] }))
+  return L.ok(res.data.filter((a) => !a.expireAt || a.expireAt > now).map((a) => ({
+    id: a._id,
+    title: a.title,
+    content: a.content,
+    pinned: !!a.pinned,
+    createdAt: a.createdAt
+  })))
 }

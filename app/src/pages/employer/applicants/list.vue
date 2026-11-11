@@ -6,7 +6,7 @@
       <view class="head" @tap="toggle(j)">
         <view>
           <text class="title">{{ j.title }}</text>
-          <text class="meta">{{ j.workArea }} · {{ j.salary }} 元/天</text>
+          <text class="meta">{{ j.workArea }} · {{ salaryText(j) }}</text>
         </view>
         <text class="count">{{ j.applyCount }} 人报名</text>
       </view>
@@ -34,12 +34,14 @@
 
 <script>
 import api from '@/api/index.js'
+import { salaryText } from '@/utils/job'
 export default {
   data() {
     return { jobs: [], applicants: [], expanded: '', loading: false }
   },
   onLoad() { this.load() },
   methods: {
+    salaryText,
     async load() {
       this.loading = true
       try {

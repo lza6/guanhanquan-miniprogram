@@ -105,7 +105,15 @@ export default {
       try {
         const images = []
         for (const p of this.images) {
-          images.push(await api.uploadFile(p, 'feedback'))
+          let fileID = ''
+          for (let attempt = 0; attempt < 2 && !fileID; attempt++) {
+            try {
+              fileID = await api.uploadFile(p, 'feedback')
+            } catch (e) {
+              if (attempt === 1) throw e
+            }
+          }
+          images.push(fileID)
         }
         await api.submitFeedback({ content: this.content, type: 1, images })
         uni.hideLoading()

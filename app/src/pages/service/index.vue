@@ -15,8 +15,11 @@
 
     <view class="card">
       <view class="section-title">联系我们</view>
-      <view class="item" @tap="callService">
-        <text>客服电话</text><text class="link">400-000-0000</text>
+      <button class="item item-btn" open-type="contact">
+        <text>在线客服</text><text class="link">微信会话</text>
+      </button>
+      <view class="item" @tap="feedback">
+        <text>意见反馈</text><text class="link">提交问题</text>
       </view>
       <view class="item" @tap="feedback">
         <text>意见反馈</text><text class="arrow">›</text>
@@ -42,7 +45,7 @@ export default {
   },
   methods: {
     toggle(i) { this.open = this.open === i ? -1 : i },
-    callService() { uni.makePhoneCall({ phoneNumber: '4000000000' }) },
+
     feedback() { uni.navigateTo({ url: '/pages/mine/feedback' }) }
   }
 }
@@ -60,5 +63,7 @@ export default {
 .item { display: flex; justify-content: space-between; align-items: center; padding: 24rpx 0; border-top: 1rpx solid #f5f5f5; font-size: 28rpx; }
 .item:first-of-type { border-top: none; }
 .link { color: #1976d2; }
+.item-btn { margin: 0; background: #fff; border-radius: 0; text-align: left; line-height: normal; font-size: 28rpx; }
+.item-btn::after { border: none; }
 .arrow { color: #ccc; }
 </style>

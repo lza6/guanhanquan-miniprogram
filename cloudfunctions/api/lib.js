@@ -128,7 +128,11 @@ async function ensureUser(openid) {
     balance: 0,
     status: 0,
     realNameVerified: false,
+    realNameStatus: -1,
     enterpriseVerified: false,
+    enterpriseStatus: -1,
+    showPhone: true,
+    lastSignDate: '',
     createdAt: now,
     lastLoginAt: now
   }

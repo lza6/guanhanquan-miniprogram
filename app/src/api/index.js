@@ -24,6 +24,9 @@ export default {
 	getEmployerJobDetail: (jobId) => get(`/jobs/detail/${jobId}`),
 	updateJob: (jobId, data) => put(`/jobs/update/${jobId}`, data),
 	deleteJob: (jobId) => del(`/jobs/delete/${jobId}`),
+	setJobStatus: (jobId, status) => post(`/jobs/status/${jobId}`, { status }),
+	topJob: (jobId) => post(`/jobs/top/${jobId}`),
+	refreshJob: (jobId) => post(`/jobs/refresh/${jobId}`),
 	getApplicantsForJob: (jobId) => get(`/jobs/applicants/list/${jobId}`),
 	acceptJobApplicant: (jobId, applicantId) => post(`/jobs/applicants/accept/${jobId}/${applicantId}`),
 	rejectJobApplicant: (jobId, applicantId) => post(`/jobs/applicants/reject/${jobId}/${applicantId}`),
@@ -31,6 +34,7 @@ export default {
 	// 工人
 	getWorkerProfile: () => get('/workers/profile'),
 	updateWorkerProfile: (data) => put('/workers/profile/update', data),
+	deleteWorkerProfile: () => del('/workers/profile'),
 	getWorkerApplications: (params) => get('/jobs/my-applications', params),
 	applyForJob: (jobId, data) => post(`/jobs/apply/${jobId}`, data),
 	cancelJobApplication: (jobId, applicationId) => post(`/jobs/applications/cancel/${jobId}/${applicationId}`),
@@ -66,6 +70,7 @@ export default {
 
 	// 轮播
 	getBanners: () => get('/banners/list'),
+	getAnnouncements: () => get('/announcements/list'),
 
 	// 保险
 	getInsuranceList: () => get('/insurances/list'),
@@ -99,6 +104,7 @@ export default {
 	signIn: () => post('/wallet/sign-in'),
 
 	submitFeedback: (data) => post('/feedback/create', data),
+	deleteAccount: () => del('/users/account'),
 	getMyFeedback: () => get('/feedback/list'),
 
 	// 上传

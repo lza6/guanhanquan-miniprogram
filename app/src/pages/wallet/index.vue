@@ -19,6 +19,7 @@
         {{ info.signedToday ? '今日已签到' : '签到 +' + info.signInPoints + ' 积分' }}
       </button>
       <button class="recharge" @tap="recharge">充值</button>
+      <button class="recharge blacklist" @tap="goBlacklist">查黑老板</button>
     </view>
 
     <view class="card" v-if="err"><text class="err">加载失败：{{ err }}</text></view>
@@ -27,6 +28,8 @@
       <view class="section-title">消耗说明</view>
       <view class="rule"><text>查看联系方式</text><text class="cost">{{ info.contactCost }} 积分 / 次</text></view>
       <view class="rule"><text>信息置顶 7 天</text><text class="cost">{{ info.topCost }} 积分 / 次</text></view>
+      <view class="rule"><text>刷新排序</text><text class="cost">{{ info.refreshCost }} 积分 / 次</text></view>
+      <view class="rule" @tap="goResume"><text>任务：完善简历（一次性）</text><text class="cost">{{ info.profileTaskRewarded ? '已领取' : '+' + info.profileTaskPoints + ' 积分' }}</text></view>
     </view>
 
     <view class="card">
@@ -49,7 +52,7 @@ export default {
   data() {
     return {
       err: '',
-      info: { points: 0, balance: 0, signedToday: false, contactCost: 5, topCost: 30, signInPoints: 2 },
+      info: { points: 0, balance: 0, signedToday: false, contactCost: 5, topCost: 30, refreshCost: 5, signInPoints: 2, profileTaskPoints: 5, profileTaskRewarded: false },
       records: []
     }
   },
@@ -81,11 +84,41 @@ export default {
         this.load()
       } catch (e) {}
     },
+    goBlacklist() {
+      uni.navigateTo({ url: '/pages/blacklist/query' })
+    },
+    goResume() {
+      uni.navigateTo({ url: '/pages/resume/my' })
+    },
     recharge() {
-      uni.showModal({
-        title: '充值',
-        content: '微信支付需在小程序内接入商户号后开放，当前可先通过签到获得积分。',
-        showCancel: false
+      const amounts = [10, 30, 50, 100, 200]
+      uni.showActionSheet({
+        itemList: amounts.map((n) => n + ' 元'),
+        success: async (r) => {
+          const amount = amounts[r.tapIndex]
+          try {
+            const res = await api.recharge({ amount })
+            const payment = res.data && res.data.payment
+            if (!payment) throw new Error('支付参数缺失')
+            await new Promise((resolve, reject) => {
+              uni.requestPayment({
+                provider: 'wxpay',
+                timeStamp: payment.timeStamp,
+                nonceStr: payment.nonceStr,
+                package: payment.package,
+                signType: payment.signType,
+                paySign: payment.paySign,
+                success: resolve,
+                fail: reject
+              })
+            })
+            uni.showToast({ title: '充值成功', icon: 'success' })
+            this.load()
+          } catch (e) {
+            if (e && e.errMsg && /cancel/.test(e.errMsg)) return
+            uni.showToast({ title: (e && e.message) || '支付未完成', icon: 'none' })
+          }
+        }
       })
     }
   }
@@ -102,7 +135,8 @@ export default {
 .actions { display: flex; padding: 24rpx; }
 .sign { flex: 1; background: #ff8a00; color: #fff; border-radius: 44rpx; height: 80rpx; line-height: 80rpx; font-size: 28rpx; margin-right: 16rpx; }
 .sign[disabled] { background: #d9d9d9; }
-.recharge { width: 200rpx; background: #fff; color: #1976d2; border-radius: 44rpx; height: 80rpx; line-height: 80rpx; font-size: 28rpx; }
+.recharge { width: 180rpx; background: #fff; color: #1976d2; border-radius: 44rpx; height: 80rpx; line-height: 80rpx; font-size: 28rpx; }
+.recharge.blacklist { margin-left: 16rpx; color: #e54d42; }
 .card { background: #fff; margin: 0 20rpx 20rpx; border-radius: 16rpx; padding: 28rpx; }
 .section-title { font-size: 30rpx; font-weight: 600; margin-bottom: 16rpx; }
 .rule { display: flex; justify-content: space-between; padding: 12rpx 0; font-size: 28rpx; color: #666; }

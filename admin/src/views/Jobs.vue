@@ -19,7 +19,7 @@
     <el-table :data="rows" v-loading="loading" border stripe>
       <el-table-column prop="title" label="岗位" width="120" />
       <el-table-column label="日薪" width="100">
-        <template #default="{ row }">{{ row.salary }} 元/天</template>
+        <template #default="{ row }">{{ salaryText(row) }}</template>
       </el-table-column>
       <el-table-column prop="workArea" label="工作地区" min-width="140" />
       <el-table-column prop="contactName" label="联系人" width="100" />
@@ -77,6 +77,13 @@ const current = ref(null)
 const statusText = (s) => ({ 0: '待审核', 1: '已通过', 2: '已下架', 3: '已过期', 4: '已驳回' }[s] || '未知')
 const statusType = (s) => ({ 0: 'warning', 1: 'success', 2: 'info', 3: 'info', 4: 'danger' }[s] || 'info')
 const fmt = (ts) => (ts ? new Date(ts).toLocaleString('zh-CN') : '-')
+const UNITS = { 1: '元/天', 2: '元/小时', 3: '元/月', 4: '面议' }
+function salaryText(row) {
+  if (!row) return ''
+  const unit = Number(row.salaryUnit || 1)
+  if (unit === 4) return '面议'
+  return (row.salary || 0) + (UNITS[unit] || '元/天')
+}
 
 async function load() {
   loading.value = true

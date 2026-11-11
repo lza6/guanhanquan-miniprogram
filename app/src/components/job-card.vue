@@ -6,7 +6,7 @@
         <text v-if="job.isTop" class="badge top">置顶</text>
         <text v-if="job.isUrgent" class="badge urgent">急招</text>
       </view>
-      <text class="job-salary">{{ job.salary }}<text class="unit">元/天</text></text>
+      <text class="job-salary">{{ salaryText(job) }}</text>
     </view>
 
     <view class="job-meta">
@@ -24,6 +24,8 @@
 </template>
 
 <script>
+import { salaryText } from '@/utils/job'
+
 export default {
   name: 'job-card',
   props: {
@@ -44,6 +46,7 @@ export default {
     }
   },
   methods: {
+    salaryText,
     formatTime(ts) {
       const diff = Date.now() - ts
       const hour = 3600 * 1000

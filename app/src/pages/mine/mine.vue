@@ -25,11 +25,6 @@
           <text class="amount">{{walletInfo.points}}</text>
           <text class="label">积分</text>
         </view>
-        <view class="divider"></view>
-        <view class="wallet-item">
-          <text class="amount">¥{{walletInfo.income}}</text>
-          <text class="label">总收入</text>
-        </view>
       </view>
       
       <!-- 未登录提示 -->
@@ -143,6 +138,13 @@
       <view class="menu-group">
         <view class="menu-title">其他</view>
         <view class="menu-list">
+          <view class="menu-item" @click="switchToEmployer">
+            <view class="icon">
+              <uni-icons type="staff" size="22" color="#1976D2"></uni-icons>
+            </view>
+            <view class="text">切换到招工方</view>
+            <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
+          </view>
           <view class="menu-item" @click="navigateTo('/pages/mine/feedback')">
             <view class="icon">
               <uni-icons type="help" size="22" color="#607D8B"></uni-icons>
@@ -165,7 +167,7 @@
     <view class="logout-btn" v-if="isLoggedIn" @click="handleLogout">退出登录</view>
     
     <!-- 身份切换按钮 -->
-    <identity-switch v-if="!isLoggedIn"></identity-switch>
+    <identity-switch></identity-switch>
   </view>
 </template>
 
@@ -173,6 +175,7 @@
 import { mapState, mapMutations } from 'vuex'
 import IdentitySwitch from '@/components/identity-switch.vue'
 import api from '@/api/index.js'
+import { getUser, setUser, clearAuth } from '@/utils/auth'
 
 export default {
   components: {
@@ -182,7 +185,7 @@ export default {
     return {
       stats: { applicationCount: 0, favoriteCount: 0, certificationCount: 0 },
       localUser: null,
-      wallet: { points: 0, balance: 0, income: '0.00' },
+      wallet: { points: 0, balance: 0 },
     }
   },
   computed: {
@@ -206,12 +209,11 @@ export default {
     }
   },
   onShow() {
-    // 以本地缓存为准渲染登录态，避免 store 注入时序问题
-    const cached = uni.getStorageSync('ghq_user')
+    const cached = getUser()
     this.localUser = cached && cached.id ? cached : null
     if (this.localUser && this.$store) this.$store.commit('setUserInfo', this.localUser)
+    this.refreshProfile()
     this.loadWallet()
-    this.checkLoginStatus()
     this.loadStats()
   },
   methods: {
@@ -220,7 +222,7 @@ export default {
       try {
         const res = await api.getWallet()
         const d = res.data || {}
-        this.wallet = { points: d.points || 0, balance: d.balance || 0, income: '0.00' }
+        this.wallet = { points: d.points || 0, balance: d.balance || 0 }
       } catch (e) {}
     },
     async loadStats() {
@@ -238,46 +240,19 @@ export default {
       } catch (e) {}
     },
     ...mapMutations(['setUserInfo', 'setUserType']),
-    // 检查登录状态
-    checkLoginStatus() {
-      const token = uni.getStorageSync('token')
-      this.isLoggedIn = !!token
-      if (token) {
-        this.getUserProfile()
-      } else {
-        this.setUserInfo(null)
-        this.setUserType('')
+    async refreshProfile() {
+      if (!this.localUser) return
+      try {
+        const res = await api.getUserProfile()
+        this.localUser = res.data
+        this.setUserInfo(res.data)
+        setUser(res.data)
+      } catch (e) {
+        if (e && e.code === 403) {
+          clearAuth()
+          this.localUser = null
+        }
       }
-    },
-    // 获取用户信息
-    getUserProfile() {
-      uni.showLoading({ title: '加载中' })
-      
-      const userType = uni.getStorageSync('userType')
-      const apiCall = userType === 'employer' ? api.getEmployerProfile() : api.getWorkerProfile()
-      
-      apiCall.then(res => {
-        if (res.code === 0) {
-          this.setUserInfo(res.data)
-        } else {
-          uni.showToast({
-            title: res.message || '获取用户信息失败',
-            icon: 'none'
-          })
-        }
-      }).catch(err => {
-        console.error('获取用户信息失败', err)
-        if (err.statusCode === 401) {
-          this.handleLogout()
-        } else {
-          uni.showToast({
-            title: '获取用户信息失败',
-            icon: 'none'
-          })
-        }
-      }).finally(() => {
-        uni.hideLoading()
-      })
     },
     // 检查登录状态并跳转
     checkLogin(url) {
@@ -304,14 +279,15 @@ export default {
         content: '确定要退出登录吗？',
         success: (res) => {
           if (res.confirm) {
-            uni.removeStorageSync('token')
+            clearAuth()
+            this.localUser = null
             this.setUserInfo(null)
             this.setUserType('')
-            this.isLoggedIn = false
             uni.showToast({
               title: '已退出登录',
               icon: 'success'
             })
+            uni.reLaunch({ url: '/pages/login/login' })
           }
         }
       })
@@ -321,6 +297,9 @@ export default {
       uni.navigateTo({
         url: '/pages/login/login'
       })
+    },
+    switchToEmployer() {
+      uni.navigateTo({ url: '/pages/employer/index' })
     },
     // 页面跳转
     navigateTo(url) {

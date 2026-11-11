@@ -19,6 +19,9 @@ export default createStore({
     toggleUserType(state, type) {
       state.userType = type
     },
+    setUserType(state, type) {
+      state.userType = type
+    },
     setMessageStatus(state, status) {
       state.hasNewMessage = status
     },

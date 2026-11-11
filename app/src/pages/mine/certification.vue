@@ -21,6 +21,7 @@
       </view>
       <button class="submit" :loading="submitting" @tap="submit">提交认证</button>
       <view class="notice" v-if="status === 0">资料已提交，等待平台核验。</view>
+      <view class="notice danger" v-if="status === 2">未通过：{{ rejectReason || '资料不完整' }}</view>
     </view>
   </view>
 </template>
@@ -29,7 +30,7 @@
 import api from '@/api/index.js'
 export default {
   data() {
-    return { form: { realName: '', idCard: '' }, status: -1, maskedName: '', submitting: false }
+    return { form: { realName: '', idCard: '' }, status: -1, maskedName: '', rejectReason: '', submitting: false }
   },
   onLoad() {
     this.loadProfile()
@@ -39,8 +40,9 @@ export default {
       try {
         const res = await api.getUserProfile()
         const u = res.data
-        this.status = u.realNameVerified ? 1 : (u.realNameStatus === 0 ? 0 : -1)
-        this.maskedName = (u.realName || '').charAt(0) + '**'
+        this.status = u.realNameVerified ? 1 : (u.realNameStatus === 0 ? 0 : (u.realNameStatus === 2 ? 2 : -1))
+        this.maskedName = u.realName || ''
+        this.rejectReason = u.realNameRejectReason || ''
       } catch (e) {}
     },
     async submit() {
@@ -73,6 +75,7 @@ export default {
 .input { flex: 1; font-size: 28rpx; }
 .submit { margin: 30rpx 24rpx; background: #1976d2; color: #fff; border-radius: 44rpx; height: 84rpx; line-height: 84rpx; font-size: 30rpx; }
 .notice { text-align: center; color: #fa8c16; font-size: 24rpx; }
+.notice.danger { color: #e54d42; }
 .done { font-size: 32rpx; color: #52c41a; font-weight: 600; }
 .sub { margin-top: 12rpx; font-size: 26rpx; color: #666; }
 </style>

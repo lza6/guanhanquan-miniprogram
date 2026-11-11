@@ -35,7 +35,7 @@
         <view class="job-meta">
           <view class="meta-item">
             <uni-icons type="money" size="16" color="#FF5722"></uni-icons>
-            <text class="salary">¥{{ job.salary }}/天</text>
+            <text class="salary">{{ salaryText(job) }}</text>
           </view>
           <view class="meta-item">
             <uni-icons type="location" size="16" color="#666"></uni-icons>
@@ -99,22 +99,24 @@
 
 <script>
 import api from '@/api/index.js'
+import { salaryText } from '@/utils/job'
 
 export default {
   data() {
     return {
       jobs: [],
       currentPage: 1,
-      pageSize: 10,
+      pageSize: 20,
       hasMore: true,
       isLoading: false,
       currentStatus: '',
       statusFilters: [
         { label: '全部', value: '' },
-        { label: '审核中', value: 'pending' },
-        { label: '招聘中', value: 'recruiting' },
-        { label: '待面试', value: 'interviewing' },
-        { label: '已完成', value: 'completed' }
+        { label: '待审核', value: 0 },
+        { label: '招聘中', value: 1 },
+        { label: '已暂停', value: 2 },
+        { label: '已过期', value: 3 },
+        { label: '已驳回', value: 4 }
       ]
     }
   },
@@ -178,14 +180,14 @@ export default {
     // 查看职位详情
     viewJobDetail(jobId) {
       uni.navigateTo({
-        url: `/pages/employer/jobs/detail?id=${jobId}`
+        url: `/pages/jobDetail/jobDetail?id=${jobId}`
       })
     },
     
     // 编辑职位
     editJob(jobId) {
       uni.navigateTo({
-        url: `/pages/employer/jobs/edit?id=${jobId}`
+        url: `/pages/employer/jobPost?id=${jobId}`
       })
     },
     
@@ -218,16 +220,17 @@ export default {
       return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
     },
     
+    salaryText,
     // 获取状态文本
     getStatusText(status) {
       const statusMap = {
-        'pending': '审核中',
-        'recruiting': '招聘中',
-        'interviewing': '待面试',
-        'completed': '已完成',
-        'closed': '已关闭'
+        0: '待审核',
+        1: '招聘中',
+        2: '已暂停',
+        3: '已过期',
+        4: '已驳回'
       }
-      return statusMap[status] || status
+      return statusMap[status] || '未知'
     }
   }
 }

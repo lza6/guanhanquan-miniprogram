@@ -13,6 +13,7 @@
     </view>
 
     <view class="card result" v-if="result">
+      <view v-if="result.cost" class="cost-tip">本次查询消耗 {{ result.cost }} 积分</view>
       <view v-if="result.count === 0" class="safe">
         <text class="safe-title">暂无记录</text>
         <text class="safe-desc">该号码没有被核实的举报记录，但仍建议先电话确认工地与工钱。</text>
@@ -57,6 +58,16 @@
         <textarea class="textarea" v-model="form.reasonDetail" maxlength="500"
           placeholder="写清楚时间、地点、欠了多少钱、对方怎么答复（至少 10 个字，便于核实）" />
       </view>
+      <view class="form-row column">
+        <text class="label">证据（选填）</text>
+        <view class="images">
+          <view class="img-box" v-for="(img, i) in images" :key="i">
+            <image :src="img" mode="aspectFill" @tap="preview(i)" />
+            <text class="del" @tap="remove(i)">×</text>
+          </view>
+          <view class="img-add" v-if="images.length < 3" @tap="choose">+</view>
+        </view>
+      </view>
       <button class="submit" :loading="submitting" @tap="submit">提交举报</button>
       <view class="notice">举报需人工核实，恶意举报会被封号。核实通过后其他工人才能看到。</view>
     </view>
@@ -74,6 +85,7 @@ export default {
       result: null,
       submitting: false,
       reasonNames: ['欠薪/拖薪', '放鸽子（到现场没活）', '虚假信息（待遇不符）', '态度恶劣/克扣工资', '其他违规'],
+      images: [],
       form: { bossPhone: '', bossName: '', reasonIndex: 0, reasonDetail: '' }
     }
   },
@@ -109,6 +121,19 @@ export default {
     onReasonChange(e) {
       this.form.reasonIndex = Number(e.detail.value)
     },
+    choose() {
+      uni.chooseImage({
+        count: 3 - this.images.length,
+        sizeType: ['compressed'],
+        success: (res) => { this.images = this.images.concat(res.tempFilePaths).slice(0, 3) }
+      })
+    },
+    preview(i) {
+      uni.previewImage({ current: this.images[i], urls: this.images })
+    },
+    remove(i) {
+      this.images.splice(i, 1)
+    },
     async submit() {
       if (!/^1\d{10}$/.test(String(this.form.bossPhone))) {
         uni.showToast({ title: '请填写正确手机号', icon: 'none' })
@@ -120,11 +145,24 @@ export default {
       }
       this.submitting = true
       try {
+        const evidence = []
+        for (const p of this.images) {
+          let fileID = ''
+          for (let attempt = 0; attempt < 2 && !fileID; attempt++) {
+            try {
+              fileID = await api.uploadFile(p, 'blacklist')
+            } catch (e) {
+              if (attempt === 1) throw e
+            }
+          }
+          evidence.push(fileID)
+        }
         await api.submitBlacklist({
           bossPhone: this.form.bossPhone,
           bossName: this.form.bossName,
           reasonType: this.form.reasonIndex + 1,
-          reasonDetail: this.form.reasonDetail
+          reasonDetail: this.form.reasonDetail,
+          evidence
         })
         uni.showToast({ title: '已提交，等待核实', icon: 'success' })
         this.form.reasonDetail = ''
@@ -167,4 +205,10 @@ export default {
 .textarea { width: 100%; height: 180rpx; font-size: 28rpx; margin-top: 12rpx; background: #f7f8fa; border-radius: 12rpx; padding: 20rpx; box-sizing: border-box; }
 .submit { margin-top: 28rpx; background: #e54d42; color: #fff; border-radius: 44rpx; height: 84rpx; line-height: 84rpx; font-size: 30rpx; }
 .notice { font-size: 22rpx; color: #999; margin-top: 16rpx; line-height: 1.6; }
+.cost-tip { font-size: 22rpx; color: #fa8c16; margin-bottom: 12rpx; }
+.images { display: flex; flex-wrap: wrap; margin-top: 12rpx; }
+.img-box, .img-add { width: 130rpx; height: 130rpx; margin: 0 14rpx 14rpx 0; border-radius: 10rpx; overflow: hidden; position: relative; }
+.img-box image { width: 100%; height: 100%; }
+.img-add { border: 1rpx dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 46rpx; color: #bbb; }
+.del { position: absolute; top: 0; right: 0; width: 38rpx; height: 38rpx; line-height: 38rpx; text-align: center; background: rgba(0,0,0,.5); color: #fff; font-size: 24rpx; }
 </style>

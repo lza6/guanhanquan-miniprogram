@@ -20,6 +20,7 @@ const ROUTES = [
   ['GET', '/users/profile', handlers.auth.profile, 'user'],
   ['PUT', '/users/profile', handlers.auth.updateProfile, 'user'],
   ['POST', '/users/real-name', handlers.auth.submitRealName, 'user'],
+  ['DELETE', '/users/account', handlers.auth.deleteAccount, 'user'],
 
   // 招工方资料
   ['GET', '/employers/profile', handlers.auth.employerProfile, 'user'],
@@ -29,7 +30,8 @@ const ROUTES = [
   ['GET', '/workers/profile', handlers.workers.myProfile, 'user'],
   ['PUT', '/workers/profile/update', handlers.workers.updateProfile, 'user'],
   ['GET', '/workers/list', handlers.workers.list, 'none'],
-  ['GET', '/workers/detail/:id', handlers.workers.detail, 'none'],
+  ['GET', '/workers/detail/:id', handlers.workers.detail, 'user'],
+  ['DELETE', '/workers/profile', handlers.workers.deleteProfile, 'user'],
 
   // 招工信息
   ['POST', '/jobs/create', handlers.jobs.create, 'user'],
@@ -43,6 +45,8 @@ const ROUTES = [
   ['GET', '/employers/jobs/list', handlers.jobs.mine, 'user'],
   ['POST', '/jobs/contact/:id', handlers.jobs.unlockContact, 'user'],
   ['POST', '/jobs/top/:id', handlers.jobs.top, 'user'],
+  ['POST', '/jobs/refresh/:id', handlers.jobs.refresh, 'user'],
+  ['POST', '/jobs/status/:id', handlers.jobs.setStatus, 'user'],
 
   // 申请
   ['POST', '/jobs/apply/:id', handlers.applications.apply, 'user'],
@@ -59,6 +63,7 @@ const ROUTES = [
   ['GET', '/categories/jobs/list/:id', handlers.categories.jobs, 'none'],
   ['GET', '/categories/workers/list/:id', handlers.categories.workers, 'none'],
   ['GET', '/banners/list', handlers.categories.banners, 'none'],
+  ['GET', '/announcements/list', handlers.social.announcements, 'none'],
 
   // 评价、通知、收藏
   ['POST', '/reviews/create', handlers.social.createReview, 'user'],
@@ -101,11 +106,19 @@ const ROUTES = [
   ['GET', '/admin/jobs', handlers.admin.jobs, 'admin'],
   ['POST', '/admin/jobs/:id/review', handlers.admin.reviewJob, 'admin'],
   ['GET', '/admin/users', handlers.admin.users, 'admin'],
+  ['GET', '/admin/users/:id', handlers.admin.userDetail, 'admin'],
   ['POST', '/admin/users/:id/status', handlers.admin.setUserStatus, 'admin'],
+  ['GET', '/admin/verifications', handlers.admin.verifications, 'admin'],
+  ['POST', '/admin/verifications/:id/review', handlers.admin.reviewVerification, 'admin'],
+  ['GET', '/admin/resumes', handlers.admin.resumes, 'admin'],
+  ['POST', '/admin/resumes/:id/review', handlers.admin.reviewResume, 'admin'],
   ['GET', '/admin/blacklist', handlers.admin.blacklist, 'admin'],
   ['POST', '/admin/blacklist/:id/review', handlers.admin.reviewBlacklist, 'admin'],
   ['GET', '/admin/reports', handlers.admin.reports, 'admin'],
   ['POST', '/admin/reports/:id/handle', handlers.admin.handleReport, 'admin'],
+  ['GET', '/admin/announcements', handlers.admin.announcements, 'admin'],
+  ['POST', '/admin/announcements', handlers.admin.saveAnnouncement, 'admin'],
+  ['DELETE', '/admin/announcements/:id', handlers.admin.deleteAnnouncement, 'admin'],
   ['GET', '/admin/banners', handlers.admin.banners, 'admin'],
   ['POST', '/admin/banners', handlers.admin.saveBanner, 'admin'],
   ['DELETE', '/admin/banners/:id', handlers.admin.deleteBanner, 'admin'],

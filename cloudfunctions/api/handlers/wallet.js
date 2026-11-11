@@ -16,8 +16,13 @@ exports.info = async (ctx) => {
     .count()).total > 0
   const contactCost = Number(await L.getConfig('contactCost', 5))
   const topCost = Number(await L.getConfig('topCost', 30))
-  return L.ok({ points, balance, signedToday: signed, contactCost, topCost,
-    signInPoints: Number(await L.getConfig('signInPoints', 2)) })
+  const refreshCost = Number(await L.getConfig('refreshCost', 5))
+  const profileTaskPoints = Number(await L.getConfig('profileTaskPoints', 5))
+  const blacklistQueryCost = Number(await L.getConfig('blacklistQueryCost', 0))
+  return L.ok({ points, balance, signedToday: signed, contactCost, topCost, refreshCost,
+    signInPoints: Number(await L.getConfig('signInPoints', 2)),
+    profileTaskPoints, profileTaskRewarded: !!ctx.user.profileTaskRewarded,
+    blacklistQueryCost })
 }
 
 exports.records = async (ctx) => {
@@ -34,23 +39,24 @@ exports.records = async (ctx) => {
 }
 
 exports.signIn = async (ctx) => {
-  const start = new Date(todayKey() + 'T00:00:00+08:00').getTime()
-  const dup = await L.db().collection('wallet')
-    .where({ openid: ctx.openid, businessType: '签到', createdAt: L.cmd().gte(start) })
-    .limit(1).get()
-  if (dup.data.length) return L.fail('今天已经签到过了', 409)
-
+  const today = todayKey()
   const points = Number(await L.getConfig('signInPoints', 2))
-  await L.db().collection('users').doc(ctx.user._id).update({
-    data: { points: L.cmd().inc(points) }
-  })
+  // 以 users.lastSignDate 做原子占位：并发只有一个请求能把日期从旧值改成今天
+  const upd = await L.db().collection('users')
+    .where({ _id: ctx.user._id, lastSignDate: L.cmd().neq(today) })
+    .update({ data: { lastSignDate: today, points: L.cmd().inc(points) } })
+  if (!upd.stats || upd.stats.updated !== 1) {
+    return L.fail('今天已经签到过了', 409)
+  }
+
   await L.db().collection('wallet').add({
     data: {
       openid: ctx.openid, type: 1, amount: points,
       businessType: '签到', businessId: '', remark: '每日签到', createdAt: Date.now()
     }
   })
-  return L.ok({ points, balance: (ctx.user.points || 0) + points })
+  const fresh = await L.db().collection('users').doc(ctx.user._id).get().catch(() => null)
+  return L.ok({ points, balance: fresh && fresh.data ? fresh.data.points : (ctx.user.points || 0) + points })
 }
 
 /**
