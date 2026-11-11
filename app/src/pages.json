@@ -222,6 +222,13 @@
         "navigationStyle": "custom",
         "navigationBarTitleText": "客服中心"
       }
+    },
+    {
+      "path": "pages/blacklist/appeal",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "申诉"
+      }
     }
   ],
   "globalStyle": {

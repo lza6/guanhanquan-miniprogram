@@ -71,7 +71,7 @@ const query = reactive({ status: 0, page: 1, pageSize: 20 })
 const visible = ref(false)
 const form = reactive({ id: '', status: 2, remark: '' })
 
-const typeText = (t) => ({ 1: '虚假信息', 2: '重复信息', 3: '违法信息', 4: '骚扰/诈骗', 5: '其他' }[t] || '其他')
+const typeText = (t) => ({ 1: '虚假信息', 2: '重复信息', 3: '违法信息', 4: '骚扰/诈骗', 5: '其他', 6: '黑名单申诉' }[t] || '其他')
 const statusText = (s) => ({ 0: '待处理', 1: '处理中', 2: '已处理', 3: '已驳回' }[s] || '未知')
 const fmt = (ts) => (ts ? new Date(ts).toLocaleString('zh-CN') : '-')
 

@@ -72,7 +72,8 @@ exports.overview = async () => {
     activeToday: await count('users', { lastLoginAt: L.cmd().gte(startOfDay) }),
     pendingFeedback: await count('feedback', { status: 0 }),
     byCategory: dist.byCategory,
-    byRegion: dist.byRegion
+    byRegion: dist.byRegion,
+    trend7d: await trend7d(),
   })
 }
 
@@ -259,4 +260,28 @@ exports.handleFeedback = async (ctx) => {
     data: { status, handleRemark: String(ctx.data.remark || ''), handleTime: Date.now() }
   })
   return L.ok({ id: ctx.params.id, status })
+}
+
+/** 近 7 日新增用户 / 岗位 */
+async function trend7d() {
+  const DAY = 86400000
+  const start = Date.now() - DAY * 6
+  const [users, jobs] = await Promise.all([
+    L.db().collection('users').where({ createdAt: L.cmd().gte(start) }).limit(1000).get(),
+    L.db().collection('jobs').where({ createdAt: L.cmd().gte(start) }).limit(1000).get()
+  ])
+  const dayKey = (ts) => {
+    const d = new Date(ts)
+    return (d.getMonth() + 1) + '/' + d.getDate()
+  }
+  const days = []
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - DAY * i)
+    days.push({ day: (d.getMonth() + 1) + '/' + d.getDate(), users: 0, jobs: 0 })
+  }
+  const map = {}
+  days.forEach((x) => { map[x.day] = x })
+  users.data.forEach((u) => { const k = dayKey(u.createdAt); if (map[k]) map[k].users += 1 })
+  jobs.data.forEach((j) => { const k = dayKey(j.createdAt); if (map[k]) map[k].jobs += 1 })
+  return days
 }

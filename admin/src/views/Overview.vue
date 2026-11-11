@@ -21,6 +21,20 @@
       </el-descriptions>
     </div>
 
+    <div class="page-card" style="margin-top: 16px">
+      <h3 class="page-title">近 7 日新增</h3>
+      <div class="trend">
+        <div class="trend-col" v-for="d in trend" :key="d.day">
+          <div class="bars">
+            <i class="bar-u" :style="{ height: h(d.users, 'users') }"></i>
+            <i class="bar-j" :style="{ height: h(d.jobs, 'jobs') }"></i>
+          </div>
+          <div class="trend-day">{{ d.day }}</div>
+        </div>
+      </div>
+      <div class="legend"><span class="dot u"></span>用户 <span class="dot j"></span>岗位</div>
+    </div>
+
     <el-row :gutter="16" style="margin-top: 16px">
       <el-col :span="12">
         <div class="page-card">
@@ -49,16 +63,22 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import api from '../api'
 
 const d = reactive({
-  byCategory: [], byRegion: [], activeToday: 0, pendingFeedback: 0,
+  byCategory: [], byRegion: [], trend7d: [], activeToday: 0, pendingFeedback: 0,
   users: 0, applications: 0, blacklistPending: 0, reportsPending: 0,
   jobs: { total: 0, pending: 0, online: 0, rejected: 0 },
   today: { newUsers: 0, newJobs: 0 }
 })
+
+const trend = computed(() => d.trend7d || [])
+function h(n, key) {
+  const max = Math.max(1, ...(d.trend7d || []).map((x) => x[key]))
+  return Math.max(4, Math.round((n / max) * 100)) + 'px'
+}
 
 function barWidth(n, list) {
   const max = Math.max(1, ...list.map((x) => x.count))
@@ -81,4 +101,13 @@ onMounted(async () => {
 .bar i { display: block; height: 10px; background: #409eff; border-radius: 5px; }
 .bar-num { width: 30px; text-align: right; color: #909399; }
 .empty { color: #c0c4cc; font-size: 13px; }
+.trend { display: flex; align-items: flex-end; gap: 18px; height: 120px; margin-top: 8px; }
+.trend-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.bars { display: flex; align-items: flex-end; gap: 4px; height: 90px; }
+.bar-u { width: 12px; background: #409eff; border-radius: 3px 3px 0 0; }
+.bar-j { width: 12px; background: #67c23a; border-radius: 3px 3px 0 0; }
+.trend-day { font-size: 12px; color: #909399; margin-top: 6px; }
+.legend { font-size: 12px; color: #909399; margin-top: 6px; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin: 0 4px 0 10px; }
+.dot.u { background: #409eff; } .dot.j { background: #67c23a; }
 </style>

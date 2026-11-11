@@ -90,6 +90,7 @@ const ROUTES = [
   // 黑老板与举报
   ['GET', '/blacklist/query', handlers.blacklist.query, 'user'],
   ['POST', '/blacklist/submit', handlers.blacklist.submit, 'user'],
+  ['POST', '/blacklist/appeal', handlers.blacklist.appeal, 'user'],
   ['POST', '/reports/create', handlers.social.createReport, 'user'],
   ['POST', '/feedback/create', handlers.social.createFeedback, 'user'],
   ['GET', '/feedback/list', handlers.social.myFeedback, 'user'],

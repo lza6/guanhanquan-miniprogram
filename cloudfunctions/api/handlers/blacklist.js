@@ -78,3 +78,24 @@ exports.submit = async (ctx) => {
   })
   return L.ok({ id: add._id, status: 0 })
 }
+
+/** 被举报方申诉：进入举报队列（类型 6），由运营核实后撤销标记 */
+exports.appeal = async (ctx) => {
+  const phone = String(ctx.data.phone || '').replace(/\D/g, '')
+  if (!/^1\d{10}$/.test(phone)) return L.fail('请填写被举报的手机号')
+  const reason = String(ctx.data.reason || '').trim()
+  if (reason.length < 10) return L.fail('请说明申诉理由（至少 10 个字）')
+  const add = await L.db().collection('reports').add({
+    data: {
+      reporterOpenid: ctx.openid,
+      jobId: '',
+      bossPhone: phone,
+      reportType: 6,
+      reason: reason.slice(0, 500),
+      evidence: Array.isArray(ctx.data.evidence) ? ctx.data.evidence.slice(0, 9) : [],
+      status: 0,
+      createdAt: Date.now()
+    }
+  })
+  return L.ok({ id: add._id })
+}

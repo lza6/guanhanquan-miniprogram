@@ -25,6 +25,7 @@
             <text class="reason-count">{{ r.count }} 次</text>
           </view>
         </view>
+        <view class="appeal" @tap="appeal">如果你是被标记方，点此提交申诉</view>
         <view class="record" v-for="(rec, i) in result.records" :key="i">
           <view class="record-head">
             <text class="record-type">{{ rec.reasonName }}</text>
@@ -102,6 +103,9 @@ export default {
         this.loading = false
       }
     },
+    appeal() {
+      uni.navigateTo({ url: '/pages/blacklist/appeal?phone=' + (this.phone || '') })
+    },
     onReasonChange(e) {
       this.form.reasonIndex = Number(e.detail.value)
     },
@@ -148,6 +152,7 @@ export default {
 .reason-item { background: #fff1f0; border-radius: 8rpx; padding: 8rpx 16rpx; margin: 0 12rpx 12rpx 0; }
 .reason-name { font-size: 24rpx; color: #e54d42; }
 .reason-count { font-size: 22rpx; color: #e54d42; margin-left: 8rpx; }
+.appeal { color: #1976d2; font-size: 26rpx; padding: 16rpx 0; }
 .record { border-top: 1rpx solid #f0f0f0; padding-top: 16rpx; margin-top: 16rpx; }
 .record-head { display: flex; justify-content: space-between; margin-bottom: 8rpx; }
 .record-type { font-size: 26rpx; color: #333; font-weight: 600; }

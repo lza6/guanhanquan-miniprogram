@@ -52,7 +52,6 @@
             <text v-else class="category-initial">{{ item.name.charAt(0) }}</text>
           </view>
           <text class="category-name">{{item.name}}</text>
-          <text class="category-desc">{{item.description}}</text>
         </view>
       </view>
     </view>
@@ -572,9 +571,9 @@ export default {
   padding: 15rpx 0;
   
   .icon-wrapper {
-    width: 90rpx;
-    height: 90rpx;
-    background: #FFFFFF;
+    width: 88rpx;
+    height: 88rpx;
+    background: #EAF3FF;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -583,7 +582,12 @@ export default {
     box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.05);
     transition: all 0.3s ease;
     
-    .category-initial { font-size: 40rpx; color: #1976d2; font-weight: 700; }
+    .category-initial {
+      font-size: 34rpx;
+      color: #1976d2;
+      font-weight: 700;
+      line-height: 1;
+    }
 .category-icon {
       width: 60rpx;
       height: 60rpx;
@@ -600,6 +604,11 @@ export default {
   .category-desc {
     font-size: 20rpx;
     color: #999999;
+    width: 100%;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     text-align: center;
     padding: 0 10rpx;
     overflow: hidden;
@@ -694,4 +703,12 @@ export default {
   border-top: 1rpx solid rgba(0,0,0,0.05);
   margin-top: 20rpx;
 }
+
+/* 布局覆盖：分类四列、快捷入口不与轮播重叠 */
+.category-grid { justify-content: flex-start; }
+.category-item { width: 25% !important; margin-bottom: 24rpx; }
+.category-item .icon-wrapper { width: 88rpx; height: 88rpx; background: #EAF3FF; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 10rpx; }
+.category-item .category-name { font-size: 26rpx; color: #333; }
+.quick-row { position: relative; z-index: 3; background: #F5F5F5; padding: 12rpx 24rpx 16rpx; display: flex; }
+.banner-wrapper { margin-top: 8rpx; }
 </style> 

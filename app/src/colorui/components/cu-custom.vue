@@ -6,7 +6,7 @@
 					<text class="cuIcon-back"></text>
 					<slot name="backText"></slot>
 				</view>
-				<view class="content" :style="[{top:StatusBar + 'px'}]">
+				<view class="content" :style="[{top: Math.max(20, StatusBar) + 'px'}]">
 					<slot name="content"></slot>
 				</view>
 				<slot name="right"></slot>
@@ -36,8 +36,9 @@
 		name: 'cu-custom',
 		computed: {
 			style() {
-				var StatusBar= this.StatusBar;
-				var CustomBar= this.CustomBar;
+				// 状态栏高度兜底：环境返回 0 时按 20px 处理，避免标题贴顶
+				var StatusBar = Math.max(20, Number(this.StatusBar) || 0);
+				var CustomBar = Math.max(StatusBar + 44, Number(this.CustomBar) || 0);
 				var bgImage = this.bgImage;
 				var style = `height:${CustomBar}px;padding-top:${StatusBar}px;`;
 				if (this.bgImage) {

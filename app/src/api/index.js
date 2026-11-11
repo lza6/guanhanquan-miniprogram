@@ -86,6 +86,7 @@ export default {
 	// 黑老板
 	queryBlacklist: (phone) => get('/blacklist/query', { phone }),
 	submitBlacklist: (data) => post('/blacklist/submit', data),
+	submitAppeal: (data) => post('/blacklist/appeal', data),
 
 	// 举报
 	submitReport: (data) => post('/reports/create', data),
