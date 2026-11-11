@@ -90,11 +90,12 @@ export default {
       }
     },
     contactWorker() {
-      if (!this.worker.contactPhone) {
-        uni.showToast({ title: '请先登录', icon: 'none' })
+      const phone = this.worker.contactPhone || ''
+      if (!phone || phone.indexOf('*') >= 0) {
+        uni.showToast({ title: '请以雇主身份登录并完成企业认证后查看', icon: 'none' })
         return
       }
-      uni.makePhoneCall({ phoneNumber: this.worker.contactPhone })
+      uni.makePhoneCall({ phoneNumber: phone })
     }
   }
 }

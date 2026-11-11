@@ -11,16 +11,18 @@ function hashPassword(password, salt) {
 async function tempUrlMap(ctx, ids) {
   const list = [...new Set((ids || []).filter(Boolean))]
   if (!list.length || !ctx.cloud || !ctx.cloud.getTempFileURL) return {}
+  const map = {}
   try {
-    const res = await ctx.cloud.getTempFileURL({ fileList: list })
-    const map = {}
-    ;(res.fileList || []).forEach((f) => {
-      if (f.tempFileURL) map[f.fileID] = f.tempFileURL
-    })
-    return map
+    for (let i = 0; i < list.length; i += 50) {
+      const res = await ctx.cloud.getTempFileURL({ fileList: list.slice(i, i + 50) })
+      ;(res.fileList || []).forEach((f) => {
+        if (f.tempFileURL) map[f.fileID] = f.tempFileURL
+      })
+    }
   } catch (e) {
-    return {}
+    // 单批失败不影响其他批次
   }
+  return map
 }
 
 /* 管理端登录失败限制：单进程内存记账，冷启动重置；多实例部署需改数据库计数。 */

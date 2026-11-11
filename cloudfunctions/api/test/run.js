@@ -226,6 +226,31 @@ console.log('\n[11] 薪资单位、有效期与状态')
   check('待审核编辑不展示', r.success && r.data.total === 0, r.data && r.data.total)
   await call('', 'POST', '/admin/jobs/' + jobId + '/review', { pass: true }, adminToken)
 
+  r = await call('emp1', 'POST', '/jobs/create', {
+    title: '待删岗位', categoryId: 'guandao', salary: 500, workArea: '沈阳',
+    contactName: '张', contactPhone: '13900001111'
+  })
+  const delJob = r.data.id
+  await call('', 'POST', '/admin/jobs/' + delJob + '/review', { pass: true }, adminToken)
+  r = await call('emp1', 'DELETE', '/jobs/delete/' + delJob)
+  check('删除岗位写入已删除状态', r.success && r.data.status === 5, r)
+  r = await call('emp1', 'GET', '/employers/jobs/list')
+  check('已删除岗位不出现在我的招聘', r.success && !(r.data.records || []).some((j) => j.id === delJob), r.data && r.data.total)
+
+  r = await call('emp1', 'POST', '/jobs/create', {
+    title: '过期置顶测试', categoryId: 'guandao', salary: 500, workArea: '沈阳',
+    contactName: '张', contactPhone: '13900001111'
+  })
+  const expJob = r.data.id
+  await call('', 'POST', '/admin/jobs/' + expJob + '/review', { pass: true }, adminToken)
+  await L.db().collection('jobs').doc(expJob).update({ data: { expireAt: Date.now() - 1000 } })
+  await L.db().collection('users').where({ _openid: 'emp1' }).update({ data: { points: 200 } })
+  r = await call('emp1', 'POST', '/jobs/top/' + expJob)
+  check('过期岗位不可置顶', !r.success, r)
+  r = await call('emp1', 'POST', '/jobs/refresh/' + expJob)
+  check('过期岗位不可刷新', !r.success, r)
+  const empPointsAfterExpiredTop = (await L.db().collection('users').where({ _openid: 'emp1' }).limit(1).get()).data[0].points
+  check('过期置顶/刷新不扣积分', empPointsAfterExpiredTop === 200, empPointsAfterExpiredTop)
   console.log('\n[12] 报名状态与重复操作')
   r = await call('w2', 'POST', '/auth/bind-phone', { code: 'mock-phone-code' })
   check('第二个工人绑定手机号', r.success, r)

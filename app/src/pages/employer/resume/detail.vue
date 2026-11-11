@@ -233,8 +233,11 @@ export default {
       uni.showToast({ title: '请使用右上角分享', icon: 'none' })
     },
     callWorker() {
-      if (!this.resumeInfo.phone) return uni.showToast({ title: '未获取到联系电话', icon: 'none' })
-      uni.makePhoneCall({ phoneNumber: this.resumeInfo.phone })
+      const phone = this.resumeInfo.phone || ''
+      if (!phone || phone.indexOf('*') >= 0) {
+        return uni.showToast({ title: '请先完成企业认证后查看联系方式', icon: 'none' })
+      }
+      uni.makePhoneCall({ phoneNumber: phone })
     },
     
 

@@ -12,7 +12,7 @@ app/                小程序端（uni-app 3 + Vue 3 + Vite）
 cloudfunctions/
   api/              单入口云函数，91 条路由
     handlers/       auth jobs workers applications categories social wallet blacklist admin
-    test/           内存数据库 + 119 项业务验收
+    test/           内存数据库 + 124 项业务验收
   pay-notify/       微信支付回调
 admin/              运营后台（Vue 3 + Element Plus）
 scripts/dev-api.cjs 本地 API 服务（无需云环境即可联调）
@@ -46,7 +46,7 @@ cd admin && npm install && npm run dev   # 端口被占用时自动 +1
 cd cloudfunctions/api && node test/run.js
 ```
 
-当前 119 项通过 0 失败。
+当前 124 项通过 0 失败。
 
 小程序 E2E：
 

@@ -267,6 +267,8 @@ export default {
           requestTop: false
         })
         this.unitIndex = Math.max(0, Math.min(3, Number(j.salaryUnit || 1) - 1))
+        const left = Math.ceil((Number(j.expireAt || 0) - Date.now()) / 86400000)
+        this.validIndex = left > 15 ? 2 : (left > 7 ? 1 : 0)
       } catch (e) {
         uni.showToast({ title: '岗位加载失败', icon: 'none' })
       }

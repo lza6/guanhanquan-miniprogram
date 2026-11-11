@@ -55,7 +55,7 @@
 
   <div class="grid">
     <div class="card"><div class="metric">75 / 77</div><div class="label">PDF 功能点闭环</div></div>
-    <div class="card"><div class="metric">119 / 0</div><div class="label">业务用例 通过 / 失败</div></div>
+    <div class="card"><div class="metric">124 / 0</div><div class="label">业务用例 通过 / 失败</div></div>
     <div class="card"><div class="metric">35 / 35</div><div class="label">小程序 E2E 断言</div></div>
     <div class="card"><div class="metric">0</div><div class="label">未注册跳转（死链）</div></div>
     <div class="card"><div class="metric">91</div><div class="label">云函数路由</div></div>
@@ -96,7 +96,7 @@
 
   <h2>4. 验证证据</h2>
   <pre>cd cloudfunctions/api && node test/run.js
-结果: 119 通过, 0 失败
+结果: 124 通过, 0 失败
 
 cd app && npm run build:mp-weixin
 DONE  Build complete. 33 页，app.wxss 123,816 字节
@@ -142,7 +142,7 @@ cd e2e && node closure.cjs → 17 通过, 0 失败</pre>
       <tr><td>工种分布按标题分组</td><td>按 categoryId 映射分类名</td></tr>
     </tbody>
   </table>
-  <p>复验：119 用例 0 失败；小程序 16+19 E2E 全过；后台构建通过。</p>
+  <p>复验：124 用例 0 失败；小程序 16+19 E2E 全过；后台构建通过。</p>
 
   <h2>6. 风险与回滚</h2>
   <table>
