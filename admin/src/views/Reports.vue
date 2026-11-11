@@ -97,9 +97,9 @@ function open(row) {
 
 async function submit() {
   try {
-    await api.handleReport(form.id, { status: form.status, remark: form.remark })
+    const res = await api.handleReport(form.id, { status: form.status, remark: form.remark })
     visible.value = false
-    ElMessage.success('已提交')
+    ElMessage.success(res && res.revoked ? `已处理，并撤销 ${res.revoked} 条黑名单标记` : '已提交')
     load()
   } catch (e) {
     ElMessage.error(e.message)

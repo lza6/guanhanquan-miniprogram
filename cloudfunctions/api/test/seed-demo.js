@@ -124,8 +124,8 @@ module.exports = function seed(coll, L) {
   )
 
   coll('banners').push(
-    { _id: 'bn1', imageUrl: '/static/img/default/shili.png', link: '', title: '春季招工专场', sort: 1, enabled: true, createdAt: now - DAY * 5 },
-    { _id: 'bn2', imageUrl: '/static/img/default/shili.png', link: '', title: '焊工持证上岗', sort: 2, enabled: true, createdAt: now - DAY * 3 }
+    { _id: 'bn1', imageUrl: '', link: '', title: '春季招工专场', sort: 1, enabled: true, createdAt: now - DAY * 5 },
+    { _id: 'bn2', imageUrl: '', link: '', title: '焊工持证上岗，日薪 600 起', sort: 2, enabled: true, createdAt: now - DAY * 3 }
   )
 
   coll('reviews').push(

@@ -199,8 +199,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   await sleep(2200)
   await shot('13-message')
   const msgp = await mp.currentPage()
-  const mt = await msgp.$('.title')
-  check('消息页显示录用通知', !!mt && (await mt.text()).indexOf('报名已通过') >= 0, mt ? await mt.text() : '空')
+  const titles = await msgp.$$('.title')
+  let hit = false
+  for (const t of titles) {
+    if ((await t.text()).indexOf('报名已通过') >= 0) { hit = true; break }
+  }
+  check('消息页显示录用通知', hit, '共 ' + titles.length + ' 条消息')
 
   console.log('\n结果: ' + pass + ' 通过, ' + fail + ' 失败')
   if (fails.length) console.log('失败项: ' + fails.join(' / '))

@@ -38,7 +38,12 @@
               :interval="3000" 
               :duration="500">
         <swiper-item v-for="(item, index) in banners" :key="index" @tap="bannerTap(item)">
-          <image :src="item.imageUrl" mode="widthFix" class="swiper-image"></image>
+          <image v-if="item.imageUrl" :src="item.imageUrl" mode="aspectFill" class="swiper-image"></image>
+          <view v-else class="promo-card">
+            <text class="promo-title">{{ item.title || '招工找活上管焊圈' }}</text>
+            <text class="promo-sub">管工 · 焊工 · 铆工 · 起重工</text>
+            <text class="promo-tag">日薪直招 · 老板电话直连</text>
+          </view>
         </swiper-item>
       </swiper>
     </view>
@@ -264,7 +269,7 @@ export default {
         ])
         
         // 设置数据
-        if (banners) this.banners = banners
+        if (banners) { this.banners = banners; this.preloadBannerImage() }
         if (categories) this.categories = categories
         if (jobs) {
           switch (this.currentTab) {
@@ -406,12 +411,12 @@ export default {
 
     // 预加载轮播图第一张图片以获取高度
     preloadBannerImage() {
-      // 固定使用原始比例
-      // 原图为516 × 145
       const windowWidth = uni.getSystemInfoSync().windowWidth
-      const imgHeight = windowWidth * (145/516)
-      this.bannerHeight = imgHeight + 'px'
-      console.log("Banner height calculated:", this.bannerHeight, "Screen width:", windowWidth)
+      const first = (this.banners && this.banners[0]) || null
+      const hasImage = !!(first && first.imageUrl)
+      // 有图按 516×145 原比例；无图走宣传卡，给足高度
+      const h = hasImage ? windowWidth * (145 / 516) : Math.round(windowWidth * 0.5)
+      this.bannerHeight = h + 'px'
     },
     
     // 获取用户位置
@@ -711,4 +716,9 @@ export default {
 .category-item .category-name { font-size: 26rpx; color: #333; }
 .quick-row { position: relative; z-index: 3; background: #F5F5F5; padding: 12rpx 24rpx 16rpx; display: flex; }
 .banner-wrapper { margin-top: 8rpx; }
+.swiper-image { width: 100%; height: 100%; }
+.promo-card { width: 100%; height: 100%; background: linear-gradient(135deg, #1b4b7a 0%, #2a6aa8 60%, #3d8fd0 100%); display: flex; flex-direction: column; justify-content: center; padding: 0 48rpx; box-sizing: border-box; }
+.promo-title { color: #fff; font-size: 44rpx; font-weight: 700; letter-spacing: 2rpx; }
+.promo-sub { color: rgba(255,255,255,.85); font-size: 26rpx; margin-top: 12rpx; }
+.promo-tag { color: #ffd08a; font-size: 24rpx; margin-top: 18rpx; }
 </style> 

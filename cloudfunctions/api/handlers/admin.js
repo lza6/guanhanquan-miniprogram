@@ -187,10 +187,48 @@ exports.reports = async (ctx) => {
 exports.handleReport = async (ctx) => {
   const status = Number(ctx.data.status)
   if (![0, 1, 2, 3].includes(status)) return L.fail('状态值不合法')
+
+  const res = await L.db().collection('reports').doc(ctx.params.id).get().catch(() => null)
+  if (!res || !res.data) return L.fail('举报记录不存在', 404)
+  const report = res.data
+
   await L.db().collection('reports').doc(ctx.params.id).update({
-    data: { status, handleRemark: String(ctx.data.remark || ''), handleTime: Date.now() }
+    data: {
+      status,
+      handleRemark: String(ctx.data.remark || ''),
+      handleTime: Date.now(),
+      handlerId: ctx.admin && ctx.admin.adminId
+    }
   })
-  return L.ok({ id: ctx.params.id, status })
+
+  // 申诉被判定属实（类型 6 + 已处理）→ 撤销对应号码的黑名单标记
+  let revoked = 0
+  if (report.reportType === 6 && status === 2 && report.bossPhone) {
+    const salt = String(await L.getConfig('phoneSalt', process.env.PHONE_SALT || 'ghq-phone-salt'))
+    const hash = L.hashPhone(report.bossPhone, salt)
+    const bl = await L.db().collection('blacklist')
+      .where({ bossPhoneHash: hash, status: 1 }).limit(50).get()
+    for (const b of bl.data) {
+      await L.db().collection('blacklist').doc(b._id).update({
+        data: { status: 2, revokedBy: ctx.admin && ctx.admin.adminId, revokedAt: Date.now(), revokeReason: '申诉核实' }
+      })
+      revoked += 1
+    }
+    if (revoked && report.reporterOpenid) {
+      await L.db().collection('notifications').add({
+        data: {
+          openid: report.reporterOpenid,
+          title: '申诉已通过',
+          content: '你的申诉已核实，相关黑名单标记已撤销（共 ' + revoked + ' 条）。',
+          type: 2,
+          isRead: false,
+          createdAt: Date.now()
+        }
+      })
+    }
+  }
+
+  return L.ok({ id: ctx.params.id, status, revoked })
 }
 
 exports.banners = async () => {
