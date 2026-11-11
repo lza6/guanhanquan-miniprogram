@@ -55,8 +55,8 @@
 
   <div class="grid">
     <div class="card"><div class="metric">75 / 77</div><div class="label">PDF 功能点闭环</div></div>
-    <div class="card"><div class="metric">111 / 0</div><div class="label">业务用例 通过 / 失败</div></div>
-    <div class="card"><div class="metric">33 / 33</div><div class="label">小程序 E2E 断言</div></div>
+    <div class="card"><div class="metric">119 / 0</div><div class="label">业务用例 通过 / 失败</div></div>
+    <div class="card"><div class="metric">35 / 35</div><div class="label">小程序 E2E 断言</div></div>
     <div class="card"><div class="metric">0</div><div class="label">未注册跳转（死链）</div></div>
     <div class="card"><div class="metric">91</div><div class="label">云函数路由</div></div>
     <div class="card"><div class="metric">33</div><div class="label">小程序页面</div></div>
@@ -96,7 +96,7 @@
 
   <h2>4. 验证证据</h2>
   <pre>cd cloudfunctions/api && node test/run.js
-结果: 111 通过, 0 失败
+结果: 119 通过, 0 失败
 
 cd app && npm run build:mp-weixin
 DONE  Build complete. 33 页，app.wxss 123,816 字节
@@ -124,7 +124,27 @@ cd e2e && node closure.cjs → 17 通过, 0 失败</pre>
     <div class="shot"><img src="../admin/shots/finance.png" alt="财务" /><div>财务：充值、积分/余额消耗、按业务汇总</div></div>
   </div>
 
-  <h2>5. 风险与回滚</h2>
+  <h2>5. 独立审查修复（1 轮）</h2>
+  <p>独立只读审查对提交 b2ae805 给出 Request Changes。以下问题已修复并复验：</p>
+  <table>
+    <thead><tr><th>发现</th><th>修复</th></tr></thead>
+    <tbody>
+      <tr><td>消息/公告页无入口</td><td>个人中心新增“消息通知”菜单</td></tr>
+      <tr><td>跨岗位录用/拒绝/取消越权</td><td>校验 application.jobId 与路由 jobId 一致</td></tr>
+      <tr><td>删除与暂停同状态，可绕过审核恢复</td><td>删除改 status 5；我的招聘排除；后台显示已删除</td></tr>
+      <tr><td>过期岗位仍可置顶/刷新扣分</td><td>操作前懒过期，状态非 1 拒绝</td></tr>
+      <tr><td>企业执照/举报证据 fileID 打不开</td><td>后台 getTempFileURL 转临时 URL</td></tr>
+      <tr><td>简历详情字段错配</td><td>映射 name/年限/证书，移除假字段</td></tr>
+      <tr><td>发布岗位不落招工方身份</td><td>发布成功写 userType=employer；脱敏号禁止拨号</td></tr>
+      <tr><td>编辑不续期、清空已付费置顶</td><td>重算 expireAt；保留 topExpireAt</td></tr>
+      <tr><td>支付回调先置 paid 后入账</td><td>订单/余额/流水同一事务</td></tr>
+      <tr><td>简历列表 200 条截断</td><td>数据库 reviewStatus=1 分页</td></tr>
+      <tr><td>工种分布按标题分组</td><td>按 categoryId 映射分类名</td></tr>
+    </tbody>
+  </table>
+  <p>复验：119 用例 0 失败；小程序 16+19 E2E 全过；后台构建通过。</p>
+
+  <h2>6. 风险与回滚</h2>
   <table>
     <thead><tr><th>项</th><th>级别</th><th>说明</th></tr></thead>
     <tbody>
@@ -136,7 +156,7 @@ cd e2e && node closure.cjs → 17 通过, 0 失败</pre>
   </table>
   <p><b>回滚：</b>所有修改在 git diff 中逐文件可回滚；旧文档通过 git rm 删除，可从 HEAD 恢复；构建产物为 gitignored，可重新生成。</p>
 
-  <h2>6. 自测题</h2>
+  <h2>7. 自测题</h2>
   <div class="quiz">
     <details><summary>1. 为什么删除 token 判断，而不是补写 token？</summary><p>登录身份来自微信云函数上下文 <code>OPENID</code>，前端没有独立的账号密码会话；token 是历史残留。统一 <code>ghq_user</code> 避免两套状态不一致。</p></details>
     <details><summary>2. 过期岗位为什么不用定时任务也正确？</summary><p>列表/详情/附近/最新/分类在读取前执行 <code>sweepExpired</code>，把 <code>expireAt</code> 到期的岗位置 3、到期置顶写回 false；展示口径始终正确。定时任务只是可选的清理手段。</p></details>

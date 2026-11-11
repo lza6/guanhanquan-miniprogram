@@ -55,6 +55,9 @@ async function main() {
   check('发布成功并进入待审核', r.success && r.data.status === 0, r)
   const jobId = r.data.id
 
+  const empUserAfterCreate = (await L.db().collection('users').where({ _openid: 'emp1' }).limit(1).get()).data[0]
+  check('发布岗位后身份变为招工方', empUserAfterCreate.userType === 'employer', empUserAfterCreate.userType)
+
   r = await call('emp1', 'POST', '/jobs/create', { title: '焊工' })
   check('缺必填项被拒绝', !r.success && /缺少必填项/.test(r.message), r)
 
@@ -153,6 +156,7 @@ async function main() {
   r = await call('', 'GET', '/admin/blacklist', {}, adminToken)
   const blRow = (r.data.records || []).find((x) => x.id === blId)
   check('后台保留证据图', !!blRow && (blRow.evidence || []).length === 1, blRow && blRow.evidence)
+  check('后台证据图可预览', !!(blRow && (blRow.evidenceUrls || [])[0]), blRow && blRow.evidenceUrls)
 
   r = await call('w2', 'GET', '/blacklist/query', { phone: '13900001111' })
   check('已确认标记可查到次数', r.success && r.data.count === 1, r.data && r.data.count)
@@ -214,8 +218,10 @@ console.log('\n[11] 薪资单位、有效期与状态')
   const priorityAfter = (await L.db().collection('jobs').doc(jobId).get()).data.priorityAt
   check('刷新后排序时间前进', priorityAfter >= priorityBefore, priorityAfter - priorityBefore)
 
-  r = await call('emp1', 'PUT', '/jobs/update/' + jobId, { title: '管工改', salary: 560 })
+  r = await call('emp1', 'PUT', '/jobs/update/' + jobId, { title: '管工改', salary: 560, validDays: 15 })
   check('编辑后回到待审核', r.success && r.data.status === 0, r)
+  const editedJob = (await L.db().collection('jobs').doc(jobId).get()).data
+  check('编辑后重新计算有效期', editedJob.expireAt > Date.now() + 14 * 86400000, editedJob.expireAt)
   r = await call('w1', 'GET', '/jobs/list', { keyword: '管工改' })
   check('待审核编辑不展示', r.success && r.data.total === 0, r.data && r.data.total)
   await call('', 'POST', '/admin/jobs/' + jobId + '/review', { pass: true }, adminToken)
@@ -237,6 +243,15 @@ console.log('\n[11] 薪资单位、有效期与状态')
   check('录用成功', r.success && r.data.status === 'accepted', r)
   r = await call('emp1', 'POST', '/jobs/applicants/accept/' + jobId + '/' + app3)
   check('重复录用返回 409', !r.success && r.code === 409, r)
+
+  r = await call('emp1', 'POST', '/jobs/create', {
+    title: '第二岗位', categoryId: 'hanjie', salary: 500, workArea: '沈阳',
+    contactName: '张', contactPhone: '13900001111'
+  })
+  const jobB = r.data.id
+  await call('', 'POST', '/admin/jobs/' + jobB + '/review', { pass: true }, adminToken)
+  r = await call('emp1', 'POST', '/jobs/applicants/accept/' + jobB + '/' + app3)
+  check('跨岗位录用被拒绝', !r.success && r.code === 403, r)
 
   console.log('\n[13] 实名与企业认证审核')
   const rnUser = 'rn_' + Date.now()
@@ -263,6 +278,7 @@ console.log('\n[11] 薪资单位、有效期与状态')
   r = await call('', 'GET', '/admin/verifications', { type: 'enterprise', status: 0 }, adminToken)
   const entRow = (r.data.records || []).find((x) => x.openid === entUser)
   check('后台企业待审列表可见', !!entRow, r.data && r.data.total)
+  check('后台企业执照可预览', !!(entRow && entRow.licenseUrl), entRow && entRow.licenseUrl)
   r = await call('', 'POST', '/admin/verifications/' + entRow.id + '/review', { type: 'enterprise', pass: true }, adminToken)
   check('企业审核通过', r.success && r.data.status === 1, r)
   r = await call(entUser, 'GET', '/employers/profile')
@@ -298,6 +314,10 @@ console.log('\n[11] 薪资单位、有效期与状态')
   check('简历审核通过', r.success && r.data.reviewStatus === 1, r)
   r = await call('emp_demo', 'GET', '/workers/list')
   check('审核后简历进入工人列表', r.success && (r.data.records || []).some((x) => x.name === '测试焊工'), r.data && r.data.total)
+  r = await call('emp_demo', 'GET', '/categories/workers/list/hanjie')
+  check('分类工人按工种 key 映射到中文', r.success && (r.data.records || []).some((x) => x.name === '测试焊工'), r.data && r.data.total)
+  r = await call('emp_demo', 'GET', '/categories/workers/list/guandao')
+  check('分类工人不匹配其他工种', r.success && !(r.data.records || []).some((x) => x.name === '测试焊工'), r.data && r.data.total)
   r = await call(entUser, 'GET', '/workers/detail/' + resumeId)
   check('雇主查看简历得到完整手机号', r.success && r.data.contactPhone === '13800000000', r.data && r.data.contactPhone)
   r = await call('w_demo2', 'GET', '/workers/detail/' + resumeId)
@@ -320,6 +340,7 @@ console.log('\n[11] 薪资单位、有效期与状态')
 
   r = await call('', 'GET', '/admin/overview', {}, adminToken)
   check('概览包含月活与月度统计', r.success && typeof r.data.mau === 'number' && r.data.monthJobs !== undefined && r.data.resumePending !== undefined, Object.keys(r.data))
+  check('工种分布使用中文名', r.success && (r.data.byCategory || []).every((x) => /^[一-龥]/.test(x.name)), r.data.byCategory)
   const insAdd = await L.db().collection('insurances').add({
     data: { name: '测试意外险', price: 30, coverage: '10 万', intro: '测试', enabled: true }
   })

@@ -138,6 +138,13 @@
       <view class="menu-group">
         <view class="menu-title">其他</view>
         <view class="menu-list">
+          <view class="menu-item" @click="navigateTo('/pages/message/index')">
+            <view class="icon">
+              <uni-icons type="notification" size="22" color="#FF9800"></uni-icons>
+            </view>
+            <view class="text">消息通知</view>
+            <uni-icons type="right" size="16" color="#CCCCCC"></uni-icons>
+          </view>
           <view class="menu-item" @click="switchToEmployer">
             <view class="icon">
               <uni-icons type="staff" size="22" color="#1976D2"></uni-icons>

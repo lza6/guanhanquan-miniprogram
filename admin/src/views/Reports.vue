@@ -22,8 +22,8 @@
       <el-table-column prop="reason" label="举报原因" min-width="220" show-overflow-tooltip />
       <el-table-column label="凭证" width="140">
         <template #default="{ row }">
-          <el-image v-for="(img, i) in (row.evidence || [])" :key="i" :src="img"
-            :preview-src-list="row.evidence" style="width: 36px; height: 36px; margin-right: 4px" fit="cover" />
+          <el-image v-for="(img, i) in (row.evidenceUrls || [])" :key="i" :src="img"
+            :preview-src-list="row.evidenceUrls" style="width: 36px; height: 36px; margin-right: 4px" fit="cover" />
         </template>
       </el-table-column>
       <el-table-column label="状态" width="100">

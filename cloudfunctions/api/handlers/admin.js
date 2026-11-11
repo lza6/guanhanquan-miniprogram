@@ -7,6 +7,22 @@ function hashPassword(password, salt) {
   return crypto.createHash('sha256').update(password + '|' + salt).digest('hex')
 }
 
+/** 把云存储 fileID 换成后台浏览器可访问的临时 URL */
+async function tempUrlMap(ctx, ids) {
+  const list = [...new Set((ids || []).filter(Boolean))]
+  if (!list.length || !ctx.cloud || !ctx.cloud.getTempFileURL) return {}
+  try {
+    const res = await ctx.cloud.getTempFileURL({ fileList: list })
+    const map = {}
+    ;(res.fileList || []).forEach((f) => {
+      if (f.tempFileURL) map[f.fileID] = f.tempFileURL
+    })
+    return map
+  } catch (e) {
+    return {}
+  }
+}
+
 /* 管理端登录失败限制：单进程内存记账，冷启动重置；多实例部署需改数据库计数。 */
 const loginFails = new Map()
 const MAX_FAILS = 5
@@ -117,12 +133,20 @@ exports.overview = async () => {
 
 /** 工种与地区分布（取前 8） */
 async function distribution() {
-  const res = await L.db().collection('jobs').where({ status: 1 }).limit(1000).get()
+  const [res, catRes] = await Promise.all([
+    L.db().collection('jobs').where({ status: 1 }).limit(1000).get(),
+    L.db().collection('categories').limit(50).get().catch(() => ({ data: [] }))
+  ])
+  const catMap = {
+    guandao: '管工', hanjie: '焊工', pugong: '普工', maogong: '铆工',
+    qizhong: '起重工', diangong: '电工', jishuyuan: '技术员'
+  }
+  catRes.data.forEach((c) => { catMap[c._id] = c.name; catMap[c.key] = c.name })
   const now = Date.now()
   const cat = {}
   const region = {}
   res.data.filter((j) => !j.expireAt || j.expireAt > now).forEach((j) => {
-    const c = j.title || j.jobType || '其他'
+    const c = catMap[j.categoryId] || j.jobType || j.title || '其他'
     cat[c] = (cat[c] || 0) + 1
     const r = String(j.workArea || '未填写').split(/[\s·,，]/)[0]
     region[r] = (region[r] || 0) + 1
@@ -282,6 +306,8 @@ exports.verifications = async (ctx) => {
   const coll = L.db().collection('users').where({ [field]: status })
   const total = (await coll.count()).total
   const res = await coll.orderBy('updatedAt', 'desc').skip(skip).limit(pageSize).get()
+  const licenseIds = res.data.map((u) => u.enterprise && u.enterprise.license).filter(Boolean)
+  const urls = await tempUrlMap(ctx, licenseIds)
   return L.ok(L.listResult(res.data.map((u) => ({
     id: u._id,
     openid: u._openid,
@@ -290,6 +316,7 @@ exports.verifications = async (ctx) => {
     realName: u.realName || '',
     idCardMasked: u.idCardMasked || '',
     enterprise: u.enterprise || null,
+    licenseUrl: u.enterprise && u.enterprise.license ? (urls[u.enterprise.license] || '') : '',
     status,
     rejectReason: type === 'enterprise' ? (u.enterpriseRejectReason || '') : (u.realNameRejectReason || ''),
     createdAt: u.createdAt,
@@ -383,9 +410,12 @@ exports.blacklist = async (ctx) => {
   const coll = L.db().collection('blacklist').where(w)
   const total = (await coll.count()).total
   const res = await coll.orderBy('createdAt', 'desc').skip(skip).limit(pageSize).get()
+  const urls = await tempUrlMap(ctx, res.data.flatMap((b) => b.evidence || []))
   return L.ok(L.listResult(res.data.map((b) => ({
     id: b._id, bossPhone: b.bossPhoneMasked, bossName: b.bossName, reasonType: b.reasonType,
-    reasonDetail: b.reasonDetail, evidence: b.evidence || [], status: b.status, createdAt: b.createdAt
+    reasonDetail: b.reasonDetail, evidence: b.evidence || [],
+    evidenceUrls: (b.evidence || []).map((id) => urls[id] || ''),
+    status: b.status, createdAt: b.createdAt
   })), total, page, pageSize))
 }
 
@@ -404,9 +434,12 @@ exports.reports = async (ctx) => {
   const coll = L.db().collection('reports').where(w)
   const total = (await coll.count()).total
   const res = await coll.orderBy('createdAt', 'desc').skip(skip).limit(pageSize).get()
+  const urls = await tempUrlMap(ctx, res.data.flatMap((r) => r.evidence || []))
   return L.ok(L.listResult(res.data.map((r) => ({
     id: r._id, jobId: r.jobId, bossPhone: r.bossPhone, reportType: r.reportType,
-    reason: r.reason, evidence: r.evidence || [], status: r.status, createdAt: r.createdAt
+    reason: r.reason, evidence: r.evidence || [],
+    evidenceUrls: (r.evidence || []).map((id) => urls[id] || ''),
+    status: r.status, createdAt: r.createdAt
   })), total, page, pageSize))
 }
 

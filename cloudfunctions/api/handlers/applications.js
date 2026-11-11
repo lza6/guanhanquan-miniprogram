@@ -96,6 +96,7 @@ exports.cancel = async (ctx) => {
   const res = await L.db().collection('applications').doc(appId).get().catch(() => null)
   if (!res || !res.data) return L.fail('报名记录不存在', 404)
   if (res.data.workerOpenid !== ctx.openid) return L.fail('无权操作', 403)
+  if (res.data.jobId !== jobId) return L.fail('报名记录与岗位不匹配', 403)
   if (res.data.status !== 'pending') return L.fail('当前状态不可取消', 409)
 
   await L.db().collection('applications').doc(appId).update({
@@ -137,6 +138,7 @@ async function changeStatus(ctx, status) {
 
   const res = await L.db().collection('applications').doc(appId).get().catch(() => null)
   if (!res || !res.data) return L.fail('报名记录不存在', 404)
+  if (res.data.jobId !== jobId) return L.fail('报名记录与岗位不匹配', 403)
   if (res.data.status !== 'pending') return L.fail('该报名已处理，请勿重复操作', 409)
 
   await L.db().collection('applications').doc(appId).update({

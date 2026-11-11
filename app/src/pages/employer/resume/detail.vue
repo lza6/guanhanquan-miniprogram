@@ -25,7 +25,7 @@
         <view class="user-info-row">
           <view class="left-section">
             <view class="user-name">{{resumeInfo.username}}</view>
-            <view class="user-basic">{{resumeInfo.gender === 'male' ? '男' : '女'}} · {{resumeInfo.age}}岁 · {{resumeInfo.education}}</view>
+            <view class="user-basic">{{resumeInfo.workExperience || '年限未填'}} · {{resumeInfo.certificateInfo || '证书未填'}}</view>
             <!-- 评分和认证 -->
             <view class="user-stats">
               <view class="stat-item" v-if="resumeInfo.rating > 0">
@@ -48,9 +48,6 @@
           </view>
           <view class="avatar-wrap">
             <image class="avatar" :src="resumeInfo.avatar || '/static/img/default-avatar.png'" mode="aspectFill"></image>
-            <view class="gender-tag" :class="resumeInfo.gender === 'male' ? 'male' : 'female'">
-              <text :class="resumeInfo.gender === 'male' ? 'cuIcon-male' : 'cuIcon-female'"></text>
-            </view>
           </view>
         </view>
         
@@ -206,6 +203,7 @@ export default {
         if (response && response.code === 0 && response.data) {
           const d = response.data
           this.resumeInfo = Object.assign({}, d, {
+            username: d.name || '',
             skills: (d.jobTypes || []).join('、'),
             experience: d.workExperience || '',
             availability: d.availableTime || '',
@@ -231,6 +229,9 @@ export default {
       });
     },
     
+    shareResume() {
+      uni.showToast({ title: '请使用右上角分享', icon: 'none' })
+    },
     callWorker() {
       if (!this.resumeInfo.phone) return uni.showToast({ title: '未获取到联系电话', icon: 'none' })
       uni.makePhoneCall({ phoneNumber: this.resumeInfo.phone })

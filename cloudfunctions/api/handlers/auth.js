@@ -93,6 +93,7 @@ exports.employerProfile = async (ctx) => {
     license: enterprise.license || '',
     address: enterprise.address || '',
     enterpriseStatus: statusOf(!!ctx.user.enterpriseVerified, ctx.user.enterpriseStatus),
+    enterpriseVerified: !!ctx.user.enterpriseVerified,
     rejectReason: ctx.user.enterpriseRejectReason || '',
     verified: !!ctx.user.enterpriseVerified,
     points: ctx.user.points || 0,

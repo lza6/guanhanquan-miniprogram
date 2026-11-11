@@ -116,11 +116,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
   const mineMenus = await p.$$('.menu-item')
   check('个人中心菜单渲染', mineMenus.length >= 8, 'menus=' + mineMenus.length)
   let switchItem = null
+  let messageItem = null
   for (const m of mineMenus) {
     const t = await m.text().catch(() => '')
-    if (t.indexOf('切换到招工方') >= 0) { switchItem = m; break }
+    if (t.indexOf('切换到招工方') >= 0) switchItem = m
+    if (t.indexOf('消息通知') >= 0) messageItem = m
   }
   check('切换到招工方入口', !!switchItem)
+  check('消息通知入口', !!messageItem)
   await shot('closure-06-mine')
 
   if (switchItem) {
@@ -148,7 +151,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
     await shot('closure-07-employer')
   }
 
-  // 7. 岗位管理
+  // 7. 按工种找工人
+  await goto('/pages/category/categoryWorkers?name=' + encodeURIComponent('全部工种'), 'navigateTo', 3500)
+  p = await mp.currentPage()
+  const workers = await p.$$('.worker-item')
+  check('按工种找工人列表', workers.length >= 2, 'workers=' + workers.length)
+  await shot('closure-11b-workers')
+
+  // 8. 岗位管理
   await goto('/pages/employer/jobManage', 'navigateTo', 3000)
   p = await mp.currentPage()
   const tabs = await p.$$('.tab')

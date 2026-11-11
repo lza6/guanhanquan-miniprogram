@@ -166,7 +166,19 @@ class Collection extends Query {
 const database = () => ({
   collection: (name) => new Collection(name),
   command,
-  RegExp: ({ regexp, options }) => ({ __regexp: { regexp, options } })
+  RegExp: ({ regexp, options }) => ({ __regexp: { regexp, options } }),
+  startTransaction: async () => {
+    const snapshot = new Map()
+    for (const [k, arr] of store) snapshot.set(k, JSON.parse(JSON.stringify(arr)))
+    return {
+      collection: (name) => new Collection(name),
+      async commit() {},
+      async rollback() {
+        store.clear()
+        for (const [k, arr] of snapshot) store.set(k, arr)
+      }
+    }
+  }
 })
 
 const fakeSdk = {
@@ -178,6 +190,9 @@ const fakeSdk = {
     phonenumber: {
       async getPhoneNumber() { return { phoneInfo: { purePhoneNumber: '13800000000' } } }
     }
+  },
+  async getTempFileURL({ fileList }) {
+    return { fileList: (fileList || []).map((id) => ({ fileID: id, tempFileURL: id })) }
   },
   cloudPay: {
     async unifiedOrder(payload) {

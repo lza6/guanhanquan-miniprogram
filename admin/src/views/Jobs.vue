@@ -74,8 +74,8 @@ const rejectVisible = ref(false)
 const rejectReason = ref('')
 const current = ref(null)
 
-const statusText = (s) => ({ 0: '待审核', 1: '已通过', 2: '已下架', 3: '已过期', 4: '已驳回' }[s] || '未知')
-const statusType = (s) => ({ 0: 'warning', 1: 'success', 2: 'info', 3: 'info', 4: 'danger' }[s] || 'info')
+const statusText = (s) => ({ 0: '待审核', 1: '已通过', 2: '已下架', 3: '已过期', 4: '已驳回', 5: '已删除' }[s] || '未知')
+const statusType = (s) => ({ 0: 'warning', 1: 'success', 2: 'info', 3: 'info', 4: 'danger', 5: 'info' }[s] || 'info')
 const fmt = (ts) => (ts ? new Date(ts).toLocaleString('zh-CN') : '-')
 const UNITS = { 1: '元/天', 2: '元/小时', 3: '元/月', 4: '面议' }
 function salaryText(row) {

@@ -12,26 +12,6 @@
       <button class="search-btn" @click="search">搜索</button>
     </view>
     
-    <!-- 筛选条件 -->
-    <view class="filter-section">
-      <view class="filter-item" @click="showFilterPopup('age')">
-        <text>{{ ageFilter || '年龄' }}</text>
-        <image src="/static/img/icons/arrow-down.png" mode="aspectFit" style="width: 24rpx; height: 24rpx; margin-left: 4rpx;"></image>
-      </view>
-      <view class="filter-item" @click="showFilterPopup('education')">
-        <text>{{ educationFilter || '学历' }}</text>
-        <image src="/static/img/icons/arrow-down.png" mode="aspectFit" style="width: 24rpx; height: 24rpx; margin-left: 4rpx;"></image>
-      </view>
-      <view class="filter-item" @click="showFilterPopup('type')">
-        <text>{{ typeFilter || '从事工种' }}</text>
-        <image src="/static/img/icons/arrow-down.png" mode="aspectFit" style="width: 24rpx; height: 24rpx; margin-left: 4rpx;"></image>
-      </view>
-      <view class="filter-item" @click="showFilterPopup('region')">
-        <text>{{ regionFilter || '工作区域' }}</text>
-        <image src="/static/img/icons/arrow-down.png" mode="aspectFit" style="width: 24rpx; height: 24rpx; margin-left: 4rpx;"></image>
-      </view>
-    </view>
-    
     <!-- 工人列表 -->
     <scroll-view scroll-y class="worker-list" refresher-enabled @refresherrefresh="onRefresh" :refresher-triggered="isRefreshing">
       <view class="worker-item" v-for="(worker, index) in workerList" :key="index" @click="viewWorkerDetail(worker)">
@@ -64,6 +44,8 @@
 </template>
 
 <script>
+import API from '@/api/index.js'
+
 export default {
   data() {
     return {
@@ -71,12 +53,7 @@ export default {
       categoryName: '',
       keyword: '',
       isRefreshing: false,
-      workerList: [],
-      ageFilter: '',
-      educationFilter: '',
-      typeFilter: '',
-      regionFilter: '',
-      currentFilterType: ''
+      workerList: []
     }
   },
   onLoad(options) {
@@ -84,7 +61,7 @@ export default {
       this.categoryId = options.id
     }
     if (options.name) {
-      this.categoryName = options.name
+      this.categoryName = decodeURIComponent(options.name)
     }
     this.loadWorkerList()
   },
@@ -97,11 +74,10 @@ export default {
     async loadWorkerList() {
       this.loading = true
       try {
-        const res = await API.getWorkersByCategory(this.categoryId, {
-          page: 1,
-          pageSize: 20,
-          keyword: this.keyword || undefined
-        })
+        const params = { page: 1, pageSize: 20, keyword: this.keyword || undefined }
+        const res = this.categoryId
+          ? await API.getWorkersByCategory(this.categoryId, params)
+          : await API.getWorkerList(params)
         this.workerList = (res.data && res.data.records) || []
       } catch (e) {
         this.workerList = []

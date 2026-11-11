@@ -91,12 +91,14 @@ exports.jobs = async (ctx) => {
 exports.workers = async (ctx) => {
   const page = Math.max(1, parseInt(ctx.data.page, 10) || 1)
   const pageSize = Math.min(50, Math.max(1, parseInt(ctx.data.pageSize, 10) || 20))
-  const w = { status: 0, jobTypes: L.db().RegExp({ regexp: String(ctx.params.id), options: 'i' }) }
-  const res = await L.db().collection('resumes').where(w).orderBy('updatedAt', 'desc').limit(200).get()
-  const visible = res.data.filter((r) => r.reviewStatus === undefined || r.reviewStatus === 1)
-  const total = visible.length
-  const slice = visible.slice((page - 1) * pageSize, page * pageSize)
-  const records = slice.map((r) => ({
+  const list = await loadCategories()
+  const found = list.find((c) => String(c.id) === String(ctx.params.id) || c.key === ctx.params.id)
+  const key = found ? found.name : ctx.params.id
+  const w = { status: 0, reviewStatus: 1, jobTypes: L.db().RegExp({ regexp: String(key), options: 'i' }) }
+  const coll = L.db().collection('resumes').where(w)
+  const total = (await coll.count()).total
+  const res = await coll.orderBy('updatedAt', 'desc').skip((page - 1) * pageSize).limit(pageSize).get()
+  const records = res.data.map((r) => ({
     id: r._id,
     name: r.name || '未填写',
     avatar: r.avatar || '',

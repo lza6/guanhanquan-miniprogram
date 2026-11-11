@@ -159,14 +159,14 @@ export default {
     },
     certification() {
       if (!this.localUser) return ''
-      return this.localUser.enterpriseVerified ? '企业已认证' : '企业未认证'
+      return (this.localUser.enterpriseVerified || this.localUser.verified) ? '企业已认证' : '企业未认证'
     },
     walletInfo() {
       const u = this.localUser || {}
       return {
         balance: u.balance || 0,
         points: u.points || 0,
-        expense: u.enterpriseVerified ? '已认证' : '未认证'
+        expense: (u.enterpriseVerified || u.verified) ? '已认证' : '未认证'
       }
     }
   },

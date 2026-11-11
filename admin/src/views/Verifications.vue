@@ -36,8 +36,8 @@
         </el-table-column>
         <el-table-column label="营业执照" width="110">
           <template #default="{ row }">
-            <el-image v-if="row.enterprise && row.enterprise.license"
-              :src="row.enterprise.license" :preview-src-list="[row.enterprise.license]"
+            <el-image v-if="row.licenseUrl"
+              :src="row.licenseUrl" :preview-src-list="[row.licenseUrl]"
               style="width: 60px; height: 40px" fit="cover" />
             <span v-else class="muted">未上传</span>
           </template>

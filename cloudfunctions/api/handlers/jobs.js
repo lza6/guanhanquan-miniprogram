@@ -91,6 +91,9 @@ exports.create = async (ctx) => {
     updatedAt: now,
     expireAt: now + days * DAY
   })
+  await L.db().collection('users').doc(ctx.user._id).update({
+    data: { userType: 'employer', updatedAt: now }
+  })
   const add = await L.db().collection('jobs').add({ data: job })
   return L.ok({ id: add._id, status: job.status, expireAt: job.expireAt })
 }
@@ -233,7 +236,7 @@ exports.latest = async (ctx) => {
 exports.mine = async (ctx) => {
   await sweepExpired()
   const { page, pageSize, skip } = L.pager(ctx.data)
-  const w = { ownerOpenid: ctx.openid }
+  const w = { ownerOpenid: ctx.openid, status: L.cmd().neq(5) }
   if (ctx.data.status !== undefined && ctx.data.status !== '') w.status = Number(ctx.data.status)
   const coll = L.db().collection('jobs').where(w)
   const total = (await coll.count()).total
@@ -246,12 +249,18 @@ exports.update = async (ctx) => {
   const res = await L.db().collection('jobs').doc(id).get().catch(() => null)
   if (!res || !res.data) return L.fail('招工信息不存在', 404)
   if (res.data.ownerOpenid !== ctx.openid) return L.fail('无权修改', 403)
+  if (Number(res.data.status) === 5) return L.fail('已删除的岗位不可编辑', 410)
 
+  const allowedDays = [7, 15, 30]
+  const requested = parseInt(ctx.data.validDays, 10)
+  const days = allowedDays.indexOf(requested) >= 0
+    ? requested
+    : (parseInt(await L.getConfig('jobValidDays', 7), 10) || 7)
+  const now = Date.now()
   const patch = Object.assign(pick(ctx.data), {
-    updatedAt: Date.now(),
+    updatedAt: now,
     status: 0,
-    isTop: false,
-    topExpireAt: 0,
+    expireAt: now + days * DAY,
     rejectReason: ''
   })
   if (ctx.data.contactPhone) patch.contactPhoneEnc = L.encryptText(ctx.data.contactPhone)
@@ -281,9 +290,9 @@ exports.remove = async (ctx) => {
   if (!res || !res.data) return L.fail('招工信息不存在', 404)
   if (res.data.ownerOpenid !== ctx.openid) return L.fail('无权删除', 403)
   await L.db().collection('jobs').doc(id).update({
-    data: { status: 2, isTop: false, topExpireAt: 0, updatedAt: Date.now() }
+    data: { status: 5, isTop: false, topExpireAt: 0, updatedAt: Date.now() }
   })
-  return L.ok({ id })
+  return L.ok({ id, status: 5 })
 }
 
 exports.unlockContact = async (ctx) => {
@@ -325,6 +334,7 @@ exports.unlockContact = async (ctx) => {
 }
 
 exports.top = async (ctx) => {
+  await sweepExpired()
   const id = ctx.params.id
   const res = await L.db().collection('jobs').doc(id).get().catch(() => null)
   if (!res || !res.data) return L.fail('招工信息不存在', 404)
@@ -352,6 +362,7 @@ exports.top = async (ctx) => {
 }
 
 exports.refresh = async (ctx) => {
+  await sweepExpired()
   const id = ctx.params.id
   const res = await L.db().collection('jobs').doc(id).get().catch(() => null)
   if (!res || !res.data) return L.fail('招工信息不存在', 404)

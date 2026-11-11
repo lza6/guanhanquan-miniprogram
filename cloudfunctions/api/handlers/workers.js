@@ -132,17 +132,15 @@ exports.deleteProfile = async (ctx) => {
 exports.list = async (ctx) => {
   const { page, pageSize, skip } = L.pager(ctx.data)
   const d = ctx.data
-  let w = { status: 0 }
+  let w = { status: 0, reviewStatus: 1 }
   if (d.categoryId) w.jobTypes = L.db().RegExp({ regexp: String(d.categoryId), options: 'i' })
   if (d.keyword) {
     w = L.withKeyword(w, ['name', 'techDescription', 'expectArea'], d.keyword)
   }
-  // 先取一页候选，再按审核状态过滤；兼容历史数据（无 reviewStatus 视为已通过）
-  const res = await L.db().collection('resumes').where(w).orderBy('updatedAt', 'desc').limit(200).get()
-  const rows = res.data.filter(visible)
-  const total = rows.length
-  const slice = rows.slice(skip, skip + pageSize)
-  return L.ok(L.listResult(slice.map((r) => shape(r, false)), total, page, pageSize))
+  const coll = L.db().collection('resumes').where(w)
+  const total = (await coll.count()).total
+  const res = await coll.orderBy('updatedAt', 'desc').skip(skip).limit(pageSize).get()
+  return L.ok(L.listResult(res.data.map((r) => shape(r, false)), total, page, pageSize))
 }
 
 exports.detail = async (ctx) => {
