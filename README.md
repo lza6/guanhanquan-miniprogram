@@ -40,6 +40,14 @@ cd admin && npm install && npm run dev   # http://localhost:5174，Vite 中间�
 
 默认管理员：`admin` / `dev-admin-pass`（仅本地内存库）。
 
+## 文档
+
+| 文档 | 内容 |
+|---|---|
+| [小程序联调与 E2E SOP](docs/小程序联调与E2E-SOP.md) | 无 AppID 本地跑通、automator 验收、7 类高频坑 |
+| [部署说明](docs/部署说明.md) | AppID/云环境/集合/云函数/支付配置 |
+| [验收矩阵](docs/验收矩阵.md) | 需求对照、已完成与遗留、验证证据 |
+
 ## 云开发部署
 
 见 [docs/部署说明.md](docs/部署说明.md)：填 AppID 与云环境 ID → 建 20 个集合 → 部署两个云函数 → 配置环境变量 → 绑定微信支付。
